@@ -1,0 +1,203 @@
+/* ============================================================================
+   compat.css — Parche universal de compatibilidad
+   ============================================================================
+   Este archivo arregla problemas de "se ve distinto en cada celular".
+   NO cambia colores, textos ni diseño. Solo hace que se vea BIEN en todos.
+   ============================================================================ */
+
+/* --- 1. En celular, la barra del navegador tapa cosas abajo --- */
+@supports (height: 100dvh) {
+  .loading-spinner,
+  .loadingContainer,
+  .imageInit,
+  .image-back,
+  .next1,
+  .next2,
+  .next3 {
+    height: 100dvh;
+  }
+}
+
+/* --- 2. En iPhone con "moco" (notch), deja espacio arriba y abajo --- */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  .navbarContainer,
+  header.fixed,
+  header.z-\[999\] {
+    padding-top: env(safe-area-inset-top);
+    height: calc(64px + env(safe-area-inset-top));
+  }
+  footer {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+}
+
+/* --- 3. iPhone hace zoom cuando tocas un cuadro de texto. Lo quitamos --- */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+input[id^="otp-"],
+input[id^="pass-"] {
+  font-size: inherit;
+}
+
+/* --- 4. En Android, al tocar se pone un cuadro azul feo. Lo quitamos --- */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --- 5. iOS agranda el texto al girar el celular. Lo bloqueamos --- */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* --- 6. Evita que la página se mueva de lado --- */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* --- 7. Texto nítido en Mac (antes se veía borroso) --- */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- 8. Los cuadros de escribir se ven igual en todos los navegadores --- */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+select {
+  color: #200020;
+  background-color: #fff;
+}
+select option {
+  color: #200020;
+}
+
+/* --- 9. Barra de scroll más delgada (más elegante) --- */
+@supports (scrollbar-width: thin) {
+  * {
+    scrollbar-width: thin;
+  }
+}
+
+/* --- 10. Las imágenes no se deforman ni se salen --- */
+img,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* --- 11. Los botones son fáciles de tocar con el dedo (44 píxeles mínimo) --- */
+button {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+.keyboard-btn,
+#delete-otp,
+#delete-pass {
+  min-height: auto;
+}
+
+/* --- 12. Respeta a quien desactivó las animaciones --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- 13. Cuando navegas con teclado (Tab), se ve un borde rosa al enfocar --- */
+:focus-visible {
+  outline: 2px solid #da0081;
+  outline-offset: 2px;
+}
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* --- 14. En iPhone, la barra de arriba se queda fija aunque abras teclado --- */
+@supports (-webkit-touch-callout: none) {
+  .navbarContainer,
+  header.fixed,
+  header.z-\[999\] {
+    position: fixed;
+    width: 100%;
+    left: 0;
+    right: 0;
+  }
+}
+
+/* --- 15. Evita el "rebote" raro al hacer scroll en iPhone --- */
+body {
+  overscroll-behavior-y: none;
+}
+/* ----------------------------------------------------------------------------
+   16) SLIDER DEL MONTO — permite arrastrar con mouse, touchpad y dedo
+   ---------------------------------------------------------------------------- */
+input[type="range"],
+.range-slider,
+.sliderMontoModalInput {
+  /* Permite arrastrar con mouse, dedo y touchpad */
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  pointer-events: auto;
+}
+
+/* El "thumb" (bolita) en Chrome, Safari, Edge */
+input[type="range"]::-webkit-slider-thumb,
+.range-slider::-webkit-slider-thumb {
+  pointer-events: auto;
+  cursor: grab;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb:active,
+.range-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+/* El "thumb" en Firefox */
+input[type="range"]::-moz-range-thumb,
+.range-slider::-moz-range-thumb {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+input[type="range"]::-moz-range-thumb:active,
+.range-slider::-moz-range-thumb:active {
+  cursor: grabbing;
+}
+
+/* Asegura que el contenedor del slider no bloquee el mouse */
+.sliderMontoModalContainer,
+.range-slider {
+  pointer-events: auto;
+}
+
+/* Por si algún elemento invisible encima está bloqueando */
+.sliderMontoModalContainer *,
+.range-slider + * {
+  pointer-events: auto;
+}

